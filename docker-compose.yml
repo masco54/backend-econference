@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: econference-db
+    environment:
+      POSTGRES_DB: econference
+      POSTGRES_USER: econference
+      POSTGRES_PASSWORD: econference
+    ports:
+      - '5432:5432'
+    volumes:
+      - econference-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  econference-data:
