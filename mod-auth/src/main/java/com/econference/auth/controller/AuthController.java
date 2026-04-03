@@ -1,18 +1,158 @@
 package com.econference.auth.controller;
 
+import com.econference.auth.adapter.in.web.dto.mapper.UserMapper;
+import com.econference.auth.adapter.in.web.dto.request.ChangePasswordRequest;
+import com.econference.auth.adapter.in.web.dto.request.ForgotPasswordRequest;
+import com.econference.auth.adapter.in.web.dto.request.LoginRequest;
+import com.econference.auth.adapter.in.web.dto.request.RegisterRequest;
+import com.econference.auth.adapter.in.web.dto.request.ResendVerificationRequest;
+import com.econference.auth.adapter.in.web.dto.request.ResetPasswordRequest;
+import com.econference.auth.adapter.in.web.dto.request.VerifyEmailRequest;
+import com.econference.auth.adapter.in.web.dto.response.LoginResponse;
+import com.econference.auth.adapter.in.web.dto.response.RegisterResponse;
+import com.econference.auth.adapter.in.web.dto.response.UserResponse;
+import com.econference.auth.application.port.in.ChangePasswordUseCase;
+import com.econference.auth.application.port.in.ForgotPasswordUseCase;
+import com.econference.auth.application.port.in.GetCurrentUserUseCase;
+import com.econference.auth.application.port.in.LoginUseCase;
+import com.econference.auth.application.port.in.LogoutUseCase;
+import com.econference.auth.application.port.in.RegisterUserUseCase;
+import com.econference.auth.application.port.in.ResendVerificationUseCase;
+import com.econference.auth.application.port.in.ResetPasswordUseCase;
+import com.econference.auth.application.port.in.VerifyEmailUseCase;
+import com.econference.auth.domain.User;
+import com.econference.auth.security.AuthenticatedUserPrincipal;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @GetMapping("/health")
+    private final RegisterUserUseCase registerUserUseCase;
+    private final VerifyEmailUseCase verifyEmailUseCase;
+    private final ResendVerificationUseCase resendVerificationUseCase;
+    private final LoginUseCase loginUseCase;
+    private final LogoutUseCase logoutUseCase;
+    private final GetCurrentUserUseCase getCurrentUserUseCase;
+    private final ForgotPasswordUseCase forgotPasswordUseCase;
+    private final ResetPasswordUseCase resetPasswordUseCase;
+    private final ChangePasswordUseCase changePasswordUseCase;
+
+    @Value("${app.jwt.expiration-days:7}")
+    private int expirationDays;
+
+    @GetMapping("/api/auth/health")
     public ResponseEntity<Map<String, String>> health() {
         return ResponseEntity.ok(Map.of("module", "auth", "status", "up"));
+    }
+
+    @PostMapping("/auth/register")
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        var result = registerUserUseCase.register(
+                request.firstName(), request.lastName(), request.email(),
+                request.password(), request.phone(),
+                request.invitationToken(), request.coOrganizerToken());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new RegisterResponse(result.userId(), result.reviewerLinked(), result.coOrganizerLinked()));
+    }
+
+    @PostMapping("/auth/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        verifyEmailUseCase.verify(request.token());
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+    }
+
+    @PostMapping("/auth/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        resendVerificationUseCase.resend(request.email());
+        return ResponseEntity.ok(Map.of("message", "Verification email sent"));
+    }
+
+    @PostMapping("/auth/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        var result = loginUseCase.login(request.email(), request.password());
+        User user = result.user();
+
+        ResponseCookie cookie = ResponseCookie.from("auth_token", result.rawJwt())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .maxAge(Duration.ofDays(expirationDays))
+                .path("/")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok(UserMapper.toLoginResponse(user));
+    }
+
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        String jwt = extractTokenFromCookie(request);
+        if (jwt != null) {
+            logoutUseCase.logout(jwt);
+        }
+
+        ResponseCookie cookie = ResponseCookie.from("auth_token", "")
+                .httpOnly(true)
+                .maxAge(0)
+                .path("/")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/auth/me")
+    public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
+        User user = getCurrentUserUseCase.getUser(principal.getUserId());
+        return ResponseEntity.ok(UserMapper.toUserResponse(user));
+    }
+
+    @PostMapping("/auth/password/forgot")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        forgotPasswordUseCase.forgotPassword(request.email());
+        return ResponseEntity.ok(Map.of("message", "If the email exists, a reset link has been sent"));
+    }
+
+    @PostMapping("/auth/password/reset")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        resetPasswordUseCase.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+    }
+
+    @PostMapping("/auth/password/change")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        changePasswordUseCase.changePassword(principal.getUserId(), request.currentPassword(), request.newPassword());
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }
+
+    private String extractTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if ("auth_token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

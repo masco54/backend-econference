@@ -1,0 +1,605 @@
+openapi: 3.1.0
+info:
+  title: E-Conference Authentication API
+  version: 1.0.0
+  description: |
+    API para autenticação, registro e gerenciamento de usuários na Plataforma E-Conference.
+    Suporta registro, verificação de email, login, logout, recuperação de senha e alternância de papéis.
+  contact:
+    name: E-Conference Team
+
+servers:
+  - url: https://api.econference.com/v1
+    description: Production server
+  - url: https://api-staging.econference.com/v1
+    description: Staging server
+  - url: http://localhost:3000/v1
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: Login,logout e gerenciamento de sessão
+  - name: Registration
+    description: Registro de novos usuários
+  - name: Password
+    description: Recuperação e redefinição de senha
+  - name: User
+    description: Gerenciamento de perfil e papéis
+
+paths:
+  /auth/register:
+    post:
+      tags: [Registration]
+      summary: Registrar novo usuário
+      description: Cria uma nova conta de usuário e envia email de verificação. Pode vincular convites pendentes de revisor ou coorganizador durante o cadastro.
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuário registrado com sucesso. Email de verificação enviado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email já está em uso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify-email:
+    post:
+      tags: [Registration]
+      summary: Verificar email
+      description: Verifica o email do usuário usando token enviado por email
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Token de verificação recebido por email
+      responses:
+        '200':
+          description: Email verificado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email verificado com sucesso
+        '400':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/resend-verification:
+    post:
+      tags: [Registration]
+      summary: Reenviar email de verificação
+      description: Reenvia o email de verificação para usuário não verificado
+      operationId: resendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Email de verificação reenviado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email de verificação enviado
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Fazer login
+      description: Autentica usuário com email e senha e inicia uma sessão baseada em cookie HttpOnly
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login bem-sucedido
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookie com token de autenticação
+              schema:
+                type: string
+                example: auth_token=abc123; HttpOnly; Secure; SameSite=Strict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: 'Credenciais inválidas ou email não verificado. Quando o email ainda não foi validado, retornar `code: EMAIL_NOT_VERIFIED`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Fazer logout
+      description: Invalida a sessão atual do usuário
+      operationId: logout
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Logout bem-sucedido
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [User]
+      summary: Obter usuário atual
+      description: Retorna informações do usuário autenticado
+      operationId: getCurrentUser
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Informações do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/password/forgot:
+    post:
+      tags: [Password]
+      summary: Solicitar recuperação de senha
+      description: Envia email com link para redefinir senha. O frontend sempre exibe sucesso para evitar enumeração de contas.
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Email de recuperação enviado (sempre retorna 200 mesmo se email não existir)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Se o email existe, instruções foram enviadas
+
+  /auth/password/reset:
+    post:
+      tags: [Password]
+      summary: Redefinir senha
+      description: Redefine a senha usando token de recuperação
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Senha redefinida com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Senha redefinida com sucesso
+        '400':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/password/change:
+    post:
+      tags: [Password]
+      summary: Alterar senha
+      description: Altera a senha do usuário autenticado
+      operationId: changePassword
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Senha alterada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Senha alterada com sucesso
+        '400':
+          description: Senha atual incorreta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{userId}:
+    get:
+      tags: [User]
+      summary: Obter usuário por ID
+      description: Retorna informações públicas de um usuário
+      operationId: getUserById
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+      responses:
+        '200':
+          description: Informações do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    
+    patch:
+      tags: [User]
+      summary: Atualizar perfil
+      description: Atualiza informações do próprio perfil
+      operationId: updateProfile
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Não autorizado a editar este perfil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/roles:
+    get:
+      tags: [User]
+      summary: Listar papéis ativos
+      description: Retorna todos os papéis (roles) do usuário autenticado
+      operationId: getMyRoles
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de papéis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token
+      description: Token de autenticação em HttpOnly cookie
+
+  parameters:
+    UserIdParam:
+      name: userId
+      in: path
+      required: true
+      description: ID do usuário
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+      properties:
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: João
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: Silva
+        email:
+          type: string
+          format: email
+          example: joao.silva@example.com
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{10,14}$'
+          example: '+5511999999999'
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          format: password
+          description: Senha deve ter pelo menos 8 caracteres
+        invitationToken:
+          type: string
+          description: Token opcional para vincular cadastro a um convite de revisor
+          example: rev_inv_123456
+        coOrganizerToken:
+          type: string
+          description: Token opcional para vincular cadastro a um convite de coorganizador
+          example: coorg_inv_123456
+
+    RegisterResponse:
+      type: object
+      required:
+        - message
+        - userId
+      properties:
+        message:
+          type: string
+          example: Usuário registrado. Verifique seu email.
+        userId:
+          type: string
+          format: uuid
+        reviewerLinked:
+          type: boolean
+          description: Indica se um convite de revisor foi vinculado ao usuário durante o cadastro
+          default: false
+        coOrganizerLinked:
+          type: boolean
+          description: Indica se um convite de coorganizador foi vinculado ao usuário durante o cadastro
+          default: false
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      required:
+        - user
+        - message
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        message:
+          type: string
+          example: Login bem-sucedido
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          description: Token de recuperação recebido por email
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 100
+          format: password
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 100
+          format: password
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{10,14}$'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        emailVerified:
+          type: boolean
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PublicUser:
+      type: object
+      description: Informações públicas do usuário (sem email/phone completos)
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+
+    Role:
+      type: string
+      enum:
+        - participant
+        - organizer
+        - reviewer
+        - admin
+      description: Papel do usuário na plataforma
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Mensagem de erro legível
+        code:
+          type: string
+          description: Código de erro específico
+          example: EMAIL_ALREADY_EXISTS
+        details:
+          type: object
+          description: Detalhes adicionais do erro
+          additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Não autenticado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Autenticação necessária
+            code: UNAUTHORIZED
+    
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Recurso não encontrado
+            code: NOT_FOUND

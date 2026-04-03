@@ -1,16 +1,23 @@
 package com.econference.auth.domain;
 
 import com.econference.shared.domain.BaseEntity;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -21,20 +28,29 @@ import lombok.Setter;
 @Builder
 public class User extends BaseEntity {
 
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "first_name", nullable = false, length = 50)
+    private String firstName;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "last_name", nullable = false, length = 50)
+    private String lastName;
+
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(length = 20)
+    private String phone;
 
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
+
+    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role")
     @Builder.Default
-    private UserRole role = UserRole.USER;
-
-    @Builder.Default
-    private boolean active = true;
+    private Set<UserRole> roles = new HashSet<>();
 }

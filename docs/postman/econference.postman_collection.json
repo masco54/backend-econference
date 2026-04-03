@@ -1,0 +1,577 @@
+{
+  "info": {
+    "name": "eConference API",
+    "_postman_id": "econference-api-collection",
+    "description": "Collection completa da API do backend eConference.\n\n## Variáveis de ambiente\nConfigure um environment com as variáveis:\n- `baseUrl` → `http://localhost:8080` (ou porta configurada)\n- `authToken` → preenchido automaticamente após login\n- `userId` → preenchido manualmente ou via script\n- `verificationToken` → token recebido por e-mail\n- `resetToken` → token de reset recebido por e-mail\n\n## Autenticação\nO login define um cookie HttpOnly `auth_token`. O Postman gerencia cookies automaticamente — não é necessário configurar header `Authorization`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verificationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "description": "Módulo de autenticação — registro, login, logout, verificação de e-mail e recuperação de senha.",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "health"]
+            },
+            "description": "Verifica se o módulo de autenticação está no ar.\n\n**Resposta esperada (200):**\n```json\n{ \"module\": \"auth\", \"status\": \"up\" }\n```"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"module\": \"auth\",\n  \"status\": \"up\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('userId', json.userId);",
+                  "    console.log('userId salvo:', json.userId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"João\",\n  \"lastName\": \"Silva\",\n  \"email\": \"joao.silva@example.com\",\n  \"password\": \"Senha@123\",\n  \"phone\": \"+5511999999999\",\n  \"invitationToken\": null,\n  \"coOrganizerToken\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registra um novo usuário no sistema.\n\n**Campos obrigatórios:** `firstName`, `lastName`, `email`, `password`\n**Campos opcionais:** `phone`, `invitationToken` (convite para revisor), `coOrganizerToken` (convite para co-organizador)\n\n**Regras de senha:** mínimo 8 caracteres, 1 maiúscula, 1 número, 1 caractere especial\n\n**Respostas:**\n- `201 Created` → usuário criado, e-mail de verificação enviado\n- `409 Conflict` → e-mail já cadastrado (`EMAIL_ALREADY_EXISTS`)\n- `422 Unprocessable Entity` → campos inválidos"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"userId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"reviewerLinked\": false,\n  \"coOrganizerLinked\": false\n}"
+            },
+            {
+              "name": "409 Conflict - Email já cadastrado",
+              "status": "Conflict",
+              "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Email already registered\",\n  \"code\": \"EMAIL_ALREADY_EXISTS\",\n  \"details\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"]
+            },
+            "description": "Verifica o e-mail do usuário usando o token recebido por e-mail.\n\n**Respostas:**\n- `200 OK` → e-mail verificado com sucesso\n- `400 Bad Request` → token inválido ou expirado (`INVALID_VERIFICATION_TOKEN`)\n- `409 Conflict` → e-mail já verificado (`EMAIL_ALREADY_VERIFIED`)"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Email verified successfully\"\n}"
+            },
+            {
+              "name": "400 Bad Request - Token inválido",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Invalid or expired verification token\",\n  \"code\": \"INVALID_VERIFICATION_TOKEN\",\n  \"details\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Resend Verification Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"joao.silva@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-verification",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-verification"]
+            },
+            "description": "Reenvia o e-mail de verificação.\n\nSempre retorna `200 OK` mesmo que o e-mail não exista (por segurança).\n\n**Respostas:**\n- `200 OK` → e-mail de verificação enviado (ou silenciosamente ignorado)\n- `409 Conflict` → e-mail já verificado (`EMAIL_ALREADY_VERIFIED`)"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Verification email sent\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('userId', json.id);",
+                  "    console.log('Login OK — userId:', json.id);",
+                  "    console.log('Cookie auth_token definido automaticamente pelo Postman.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"joao.silva@example.com\",\n  \"password\": \"Senha@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Autentica o usuário com e-mail e senha.\n\nO servidor define o cookie HttpOnly `auth_token` com validade de 7 dias. O Postman gerencia esse cookie automaticamente nas próximas requisições.\n\n**Respostas:**\n- `200 OK` → login realizado, cookie `auth_token` definido no header `Set-Cookie`\n- `401 Unauthorized` → credenciais inválidas (`INVALID_CREDENTIALS`)\n- `403 Forbidden` → e-mail não verificado (`EMAIL_NOT_VERIFIED`)"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" },
+                { "key": "Set-Cookie", "value": "auth_token=<jwt>; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800" }
+              ],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"firstName\": \"João\",\n  \"lastName\": \"Silva\",\n  \"email\": \"joao.silva@example.com\",\n  \"phone\": \"+5511999999999\",\n  \"emailVerified\": true,\n  \"roles\": [\"participant\"],\n  \"createdAt\": \"2026-04-03T12:00:00Z\",\n  \"updatedAt\": \"2026-04-03T12:00:00Z\"\n}"
+            },
+            {
+              "name": "401 Unauthorized - Credenciais inválidas",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Invalid email or password\",\n  \"code\": \"INVALID_CREDENTIALS\",\n  \"details\": {}\n}"
+            },
+            {
+              "name": "403 Forbidden - E-mail não verificado",
+              "status": "Forbidden",
+              "code": 403,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Email not verified\",\n  \"code\": \"EMAIL_NOT_VERIFIED\",\n  \"details\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Current User (me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Retorna os dados do usuário autenticado.\n\n**Requer:** cookie `auth_token` (definido pelo login)\n\n**Respostas:**\n- `200 OK` → dados do usuário\n- `401 Unauthorized` → não autenticado ou sessão expirada"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"firstName\": \"João\",\n  \"lastName\": \"Silva\",\n  \"email\": \"joao.silva@example.com\",\n  \"phone\": \"+5511999999999\",\n  \"emailVerified\": true,\n  \"roles\": [\"participant\"],\n  \"createdAt\": \"2026-04-03T12:00:00Z\",\n  \"updatedAt\": \"2026-04-03T12:00:00Z\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Authentication required\",\n  \"code\": \"UNAUTHORIZED\",\n  \"details\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Invalida a sessão atual do usuário.\n\nO servidor invalida o JWT no denylist e limpa o cookie `auth_token`.\n\n**Requer:** cookie `auth_token`\n\n**Respostas:**\n- `204 No Content` → logout realizado (também retorna 204 mesmo sem cookie)"
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                { "key": "Set-Cookie", "value": "auth_token=; Path=/; HttpOnly; Max-Age=0" }
+              ],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"joao.silva@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/password/forgot",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "password", "forgot"]
+            },
+            "description": "Solicita o envio de e-mail para recuperação de senha.\n\nSempre retorna `200 OK` mesmo que o e-mail não exista (por segurança — evita enumeração de usuários).\n\nO token de reset tem validade de **1 hora**."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"If the email exists, a reset link has been sent\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NovaSenha@456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/password/reset",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "password", "reset"]
+            },
+            "description": "Redefine a senha usando o token recebido por e-mail.\n\n**Respostas:**\n- `200 OK` → senha redefinida com sucesso\n- `400 Bad Request` → token inválido ou expirado (`INVALID_RESET_TOKEN`)"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Password reset successfully\"\n}"
+            },
+            {
+              "name": "400 Bad Request - Token inválido",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Invalid or expired reset token\",\n  \"code\": \"INVALID_RESET_TOKEN\",\n  \"details\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Senha@123\",\n  \"newPassword\": \"NovaSenha@456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/password/change",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "password", "change"]
+            },
+            "description": "Altera a senha do usuário autenticado.\n\n**Requer:** cookie `auth_token`\n\n**Respostas:**\n- `200 OK` → senha alterada com sucesso\n- `400 Bad Request` → senha atual incorreta (`INVALID_CURRENT_PASSWORD`)\n- `401 Unauthorized` → não autenticado"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Password changed successfully\"\n}"
+            },
+            {
+              "name": "400 Bad Request - Senha atual incorreta",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Current password is incorrect\",\n  \"code\": \"INVALID_CURRENT_PASSWORD\",\n  \"details\": {}\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Authentication required\",\n  \"code\": \"UNAUTHORIZED\",\n  \"details\": {}\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 Users",
+      "description": "Endpoints relacionados ao perfil de usuários.",
+      "item": [
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Retorna as informações públicas de um usuário pelo ID.\n\n**Respostas:**\n- `200 OK` → dados públicos do usuário\n- `404 Not Found` → usuário não encontrado"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"firstName\": \"João\",\n  \"lastName\": \"Silva\",\n  \"email\": \"joao.silva@example.com\",\n  \"phone\": \"+5511999999999\",\n  \"emailVerified\": true,\n  \"roles\": [\"participant\"],\n  \"createdAt\": \"2026-04-03T12:00:00Z\",\n  \"updatedAt\": \"2026-04-03T12:00:00Z\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"User not found\",\n  \"code\": \"USER_NOT_FOUND\",\n  \"details\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"João\",\n  \"lastName\": \"Santos\",\n  \"phone\": \"+5511988888888\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Atualiza o perfil do próprio usuário autenticado.\n\n**Requer:** cookie `auth_token`\nApenas o próprio usuário pode editar seu perfil.\n\n**Respostas:**\n- `200 OK` → perfil atualizado\n- `401 Unauthorized` → não autenticado\n- `403 Forbidden` → tentativa de editar outro usuário\n- `404 Not Found` → usuário não encontrado"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"firstName\": \"João\",\n  \"lastName\": \"Santos\",\n  \"email\": \"joao.silva@example.com\",\n  \"phone\": \"+5511988888888\",\n  \"emailVerified\": true,\n  \"roles\": [\"participant\"],\n  \"createdAt\": \"2026-04-03T12:00:00Z\",\n  \"updatedAt\": \"2026-04-03T13:00:00Z\"\n}"
+            },
+            {
+              "name": "403 Forbidden - Outro usuário",
+              "status": "Forbidden",
+              "code": 403,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"You can only update your own profile\",\n  \"code\": \"FORBIDDEN\",\n  \"details\": {}\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get My Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "roles"]
+            },
+            "description": "Lista os papéis (roles) ativos do usuário autenticado.\n\n**Requer:** cookie `auth_token`\n\n**Respostas:**\n- `200 OK` → lista de roles\n- `401 Unauthorized` → não autenticado"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"roles\": [\"participant\", \"reviewer\"]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🩺 Health Checks",
+      "description": "Endpoints de health check de todos os módulos.",
+      "item": [
+        {
+          "name": "Auth Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Events Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Committees Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/committees/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "committees", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrations Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registrations/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "registrations", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reviews Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submissions Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/submissions/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "submissions", "health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+

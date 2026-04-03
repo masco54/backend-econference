@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2>Verificação de Email - eConference</h2>
+  <p>Olá {{FIRST_NAME}},</p>
+  <p>Obrigado por se cadastrar no eConference! Clique no link abaixo para verificar seu email:</p>
+  <p><a href="{{ACTION_URL}}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Verificar Email</a></p>
+  <p>Ou copie e cole este link no navegador:</p>
+  <p style="word-break:break-all;">{{ACTION_URL}}</p>
+  <p>Este link expira em {{EXPIRY_HOURS}} horas.</p>
+  <hr>
+  <p style="color:#666;font-size:12px;">Se você não criou esta conta, ignore este email.</p>
+</body>
+</html>

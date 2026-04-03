@@ -1,6 +1,8 @@
 package com.econference.auth.domain;
 
 public enum UserRole {
-    ADMIN,
-    USER
+    PARTICIPANT,
+    ORGANIZER,
+    REVIEWER,
+    ADMIN
 }

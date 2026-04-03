@@ -1,0 +1,397 @@
+{
+	"info": {
+		"_postman_id": "econference-backend-collection",
+		"name": "eConference Backend",
+		"description": "Coleção de rotas do backend eConference.\n\nAutenticação via cookie HttpOnly `auth_token` — após o login, o cookie é armazenado automaticamente pelo Postman.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "verificationToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "resetToken",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"description": "Módulo de autenticação — cadastro, login, verificação de email, recuperação de senha.",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "health"]
+						},
+						"description": "Verifica se o módulo auth está ativo."
+					},
+					"response": []
+				},
+				{
+					"name": "Cadastro",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('userId', json.userId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"João\",\n  \"lastName\": \"Silva\",\n  \"email\": \"joao@example.com\",\n  \"password\": \"Senha1234\",\n  \"phone\": \"+5511999999999\",\n  \"invitationToken\": null,\n  \"coOrganizerToken\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "Registra um novo usuário. Envia email de verificação.\n\n- `phone`, `invitationToken` e `coOrganizerToken` são opcionais.\n- Resposta 201 com `userId`."
+					},
+					"response": []
+				},
+				{
+					"name": "Verificar Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-email",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "verify-email"]
+						},
+						"description": "Verifica o email do usuário com o token recebido por email.\n\nCopie o token do log da aplicação e cole na variável `verificationToken`."
+					},
+					"response": []
+				},
+				{
+					"name": "Reenviar Verificação",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"joao@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/resend-verification",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "resend-verification"]
+						},
+						"description": "Reenvia o email de verificação. Invalida tokens anteriores."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('userId', json.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"joao@example.com\",\n  \"password\": \"Senha1234\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Autentica o usuário. Retorna dados do usuário e armazena o cookie `auth_token` automaticamente.\n\nO cookie é usado em todas as requisições autenticadas subsequentes."
+					},
+					"response": []
+				},
+				{
+					"name": "Usuário Atual",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "me"]
+						},
+						"description": "Retorna os dados completos do usuário autenticado.\n\nRequer cookie `auth_token` (obtido via Login)."
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
+						},
+						"description": "Invalida a sessão no servidor e limpa o cookie `auth_token`.\n\nResponde 204 No Content."
+					},
+					"response": []
+				},
+				{
+					"name": "Esqueceu a Senha",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"joao@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/password/forgot",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "password", "forgot"]
+						},
+						"description": "Solicita recuperação de senha. Sempre retorna 200 independente de o email existir (anti-enumeração).\n\nVerifique o log para obter o token de reset."
+					},
+					"response": []
+				},
+				{
+					"name": "Redefinir Senha",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NovaSenha5678\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/password/reset",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "password", "reset"]
+						},
+						"description": "Redefine a senha usando o token de reset recebido por email.\n\nInvalida todas as sessões ativas do usuário."
+					},
+					"response": []
+				},
+				{
+					"name": "Alterar Senha",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"currentPassword\": \"Senha1234\",\n  \"newPassword\": \"NovaSenha5678\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/password/change",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "password", "change"]
+						},
+						"description": "Altera a senha do usuário autenticado. Requer a senha atual para confirmação.\n\nRequer cookie `auth_token`."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"description": "Módulo de autenticação — perfil público, atualização de perfil e papéis.",
+			"item": [
+				{
+					"name": "Perfil Público",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{userId}}"]
+						},
+						"description": "Retorna dados públicos de um usuário (id, firstName, lastName, roles).\n\nNão expõe email nem phone.\n\nRequer cookie `auth_token`."
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Perfil",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"João Pedro\",\n  \"lastName\": \"Silva\",\n  \"phone\": \"+5511888888888\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{userId}}"]
+						},
+						"description": "Atualiza o perfil do próprio usuário. Todos os campos são opcionais.\n\nRetorna 403 se tentar atualizar perfil de outro usuário.\n\nRequer cookie `auth_token`."
+					},
+					"response": []
+				},
+				{
+					"name": "Meus Papéis",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/me/roles",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "me", "roles"]
+						},
+						"description": "Retorna os papéis do usuário autenticado (participant, organizer, reviewer, admin).\n\nRequer cookie `auth_token`."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Health Checks",
+			"description": "Verificação de status de todos os módulos.",
+			"item": [
+				{
+					"name": "Events Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "events", "health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submissions Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/submissions/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "submissions", "health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reviews Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/reviews/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "reviews", "health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Committees Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/committees/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "committees", "health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Registrations Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/registrations/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "registrations", "health"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -27,8 +27,32 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  mail:
+    host: "${MAIL_HOST:mail.econferences.com.br}"
+    port: "${MAIL_PORT:465}"
+    username: "${MAIL_USERNAME:suporte@econferences.com.br}"
+    password: "${MAIL_PASSWORD:UIN665_MRXNd^[=u}"
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.ssl.enable: true
+      mail.smtp.starttls.enable: false
+
 server:
   port: 8080
+
+app:
+  cors:
+    allowed-origins: "http://localhost:4200"
+  jwt:
+    secret: "${JWT_SECRET:dGhpcy1pcy1hLWRldi1vbmx5LTI1Ni1iaXQtc2VjcmV0LWtleS1kb250LXVzZS1pbi1wcm9k}"
+    expiration-days: 7
+  email:
+    from: "suporte@econferences.com.br"
+    verification-expiry-hours: 24
+    reset-token-expiry-hours: 1
+    base-url: "http://localhost:3000"
+  invitation:
+    stub-mode: true
 
 logging:
   level:

@@ -6,3 +6,9 @@ target/
 *.jar
 *.log
 .DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.env*
+*.original
