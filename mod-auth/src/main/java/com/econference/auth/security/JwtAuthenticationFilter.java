@@ -4,12 +4,14 @@ import com.econference.auth.application.port.out.UserRepositoryPort;
 import com.econference.auth.application.port.out.UserSessionRepositoryPort;
 import com.econference.auth.domain.User;
 import com.econference.auth.domain.UserSession;
+import com.econference.shared.config.MdcLoggingFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -66,6 +68,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 principal, null, principal.getAuthorities());
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Enrich MDC with authenticated user info so all subsequent log statements include it
+        MDC.put(MdcLoggingFilter.MDC_USER_ID,    user.getId().toString());
+        MDC.put(MdcLoggingFilter.MDC_USER_EMAIL,  user.getEmail());
 
         filterChain.doFilter(request, response);
     }

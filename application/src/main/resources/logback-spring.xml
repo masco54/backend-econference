@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="econference-backend"/>
+
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>{"data":"%date{yyyy-MM-dd'T'HH:mm:ss.SSSZ}","message":"%replace(%replace(%replace(%msg){'\\','\\\\'}){'&quot;','\\&quot;'}){'[\r\n]+',' '}","level":"%level","modulo":"%logger{36}","thread":"%thread","app":"${appName}"%replace(%X{requestId:-}){'^(.+)$',',&quot;requestId&quot;:&quot;$1&quot;'}%replace(%X{method:-}){'^(.+)$',',&quot;method&quot;:&quot;$1&quot;'}%replace(%replace(%X{uri:-}){'&quot;','\\&quot;'}){'^(.+)$',',&quot;uri&quot;:&quot;$1&quot;'}%replace(%X{userId:-}){'^(.+)$',',&quot;userId&quot;:&quot;$1&quot;'}%replace(%replace(%X{userEmail:-}){'&quot;','\\&quot;'}){'^(.+)$',',&quot;userEmail&quot;:&quot;$1&quot;'}%replace(%replace(%X{userAgent:-}){'&quot;','\\&quot;'}){'^(.+)$',',&quot;userAgent&quot;:&quot;$1&quot;'}%replace(%X{clientIp:-}){'^(.+)$',',&quot;clientIp&quot;:&quot;$1&quot;'}%replace(%X{durationMs:-}){'^(.+)$',',&quot;durationMs&quot;:&quot;$1&quot;'}%replace(%X{statusCode:-}){'^(.+)$',',&quot;statusCode&quot;:&quot;$1&quot;'}%replace(%X{emailToken:-}){'^(.+)$',',&quot;emailToken&quot;:&quot;$1&quot;'}%replace(%replace(%X{emailRecipient:-}){'&quot;','\\&quot;'}){'^(.+)$',',&quot;emailRecipient&quot;:&quot;$1&quot;'}%replace(%replace(%X{emailSubject:-}){'&quot;','\\&quot;'}){'^(.+)$',',&quot;emailSubject&quot;:&quot;$1&quot;'}}%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+
+    <logger name="com.econference" level="DEBUG" additivity="false">
+        <appender-ref ref="JSON_CONSOLE"/>
+    </logger>
+
+</configuration>
+
