@@ -14,5 +14,5 @@ public class EmailConfig {
     private String from;
     private int verificationExpiryHours = 24;
     private int resetTokenExpiryHours = 1;
-    private String baseUrl = "http://localhost:3000";
+    private String baseUrl = "http://localhost:4200";
 }
