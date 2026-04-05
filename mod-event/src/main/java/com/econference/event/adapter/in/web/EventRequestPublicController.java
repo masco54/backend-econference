@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/event-requests")
+@RequestMapping("/api/v1/public/event-requests")
 @RequiredArgsConstructor
 public class EventRequestPublicController {
 

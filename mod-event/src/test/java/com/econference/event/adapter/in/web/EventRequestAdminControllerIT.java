@@ -90,7 +90,7 @@ class EventRequestAdminControllerIT {
                 new GetAdminEventRequestsUseCase.Pagination(1, 10, 1, 1)
         ));
 
-        mockMvc.perform(get("/admin/event-requests")
+        mockMvc.perform(get("/api/v1/admin/event-requests")
                         .param("status", "approved")
                         .param("search", "ana")
                         .param("page", "1")
@@ -107,7 +107,7 @@ class EventRequestAdminControllerIT {
         EventRequest request = approvedRequest();
         when(getAdminEventRequestDetailUseCase.get(request.getId())).thenReturn(request);
 
-        mockMvc.perform(get("/admin/event-requests/{requestId}", request.getId()))
+        mockMvc.perform(get("/api/v1/admin/event-requests/{requestId}", request.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(request.getId().toString()))
                 .andExpect(jsonPath("$.statusHistory.length()").value(2))
@@ -120,7 +120,7 @@ class EventRequestAdminControllerIT {
         EventRequest request = underReviewRequest();
         when(addEventRequestNoteUseCase.addNote(any())).thenReturn(request);
 
-        mockMvc.perform(post("/admin/event-requests/{requestId}/add-note", request.getId())
+        mockMvc.perform(post("/api/v1/admin/event-requests/{requestId}/add-note", request.getId())
                         .principal(new UsernamePasswordAuthenticationToken(new TestPrincipal(adminUserId), null))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new AddEventRequestNoteRequest("Precisamos confirmar o número de trilhas."))))
@@ -134,7 +134,7 @@ class EventRequestAdminControllerIT {
         EventRequest request = approvedRequest();
         when(approveEventRequestUseCase.approve(any())).thenReturn(request);
 
-        mockMvc.perform(post("/admin/event-requests/{requestId}/approve", request.getId())
+        mockMvc.perform(post("/api/v1/admin/event-requests/{requestId}/approve", request.getId())
                         .principal(new UsernamePasswordAuthenticationToken(new TestPrincipal(adminUserId), null))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ApproveEventRequestRequest("Solicitação aderente ao calendário institucional."))))
@@ -149,7 +149,7 @@ class EventRequestAdminControllerIT {
         EventRequest request = rejectedRequest();
         when(rejectEventRequestUseCase.reject(any())).thenReturn(request);
 
-        mockMvc.perform(post("/admin/event-requests/{requestId}/reject", request.getId())
+        mockMvc.perform(post("/api/v1/admin/event-requests/{requestId}/reject", request.getId())
                         .principal(new UsernamePasswordAuthenticationToken(new TestPrincipal(adminUserId), null))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RejectEventRequestRequest("O período informado conflita com eventos já homologados."))))
@@ -164,7 +164,7 @@ class EventRequestAdminControllerIT {
         EventRequest request = approvedRequest();
         when(reissueActivationTokenUseCase.reissue(any())).thenReturn(request);
 
-        mockMvc.perform(post("/admin/event-requests/{requestId}/reissue-token", request.getId())
+        mockMvc.perform(post("/api/v1/admin/event-requests/{requestId}/reissue-token", request.getId())
                         .principal(new UsernamePasswordAuthenticationToken(new TestPrincipal(adminUserId), null)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activationToken").value(request.getActivationToken().toString()));

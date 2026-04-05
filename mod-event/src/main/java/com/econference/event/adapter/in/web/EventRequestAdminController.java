@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/admin/event-requests")
+@RequestMapping("/api/v1/admin/event-requests")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class EventRequestAdminController {

@@ -61,13 +61,13 @@ class EventRequestAdminSecurityIT {
 
     @Test
     void shouldRejectUnauthenticatedAccessToAdminEndpoints() throws Exception {
-        mockMvc.perform(get("/admin/event-requests"))
+        mockMvc.perform(get("/api/v1/admin/event-requests"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void shouldRejectAuthenticatedUserWithoutAdminRole() throws Exception {
-        mockMvc.perform(get("/admin/event-requests")
+        mockMvc.perform(get("/api/v1/admin/event-requests")
                         .with(user(User.withUsername("user@example.com").password("pw").roles("PARTICIPANT").build())))
                 .andExpect(status().isForbidden());
     }
@@ -79,7 +79,7 @@ class EventRequestAdminSecurityIT {
                 new GetAdminEventRequestsUseCase.Pagination(1, 10, 0, 0)
         ));
 
-        mockMvc.perform(get("/admin/event-requests")
+        mockMvc.perform(get("/api/v1/admin/event-requests")
                         .with(user(User.withUsername("admin@example.com").password("pw").roles("ADMIN").build())))
                 .andExpect(status().isOk());
     }

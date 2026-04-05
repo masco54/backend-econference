@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/registrations")
+@RequestMapping("/api/v1/registrations")
 public class RegistrationController {
 
     @GetMapping("/health")

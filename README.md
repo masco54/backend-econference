@@ -21,6 +21,22 @@ Monólito modular com Spring Boot 3.4 + Java 24.
 ./mvnw spring-boot:run -pl application
 ```
 
+Ao subir localmente, a aplicação cria um usuário administrador bootstrap se ele ainda não existir:
+
+- email: `admin@econference.local`
+- senha: `Admin@123`
+
+Você pode sobrescrever ou desabilitar esse bootstrap via variáveis de ambiente:
+
+- `BOOTSTRAP_ADMIN_ENABLED=false`
+- `BOOTSTRAP_ADMIN_EMAIL=...`
+- `BOOTSTRAP_ADMIN_PASSWORD=...`
+- `BOOTSTRAP_ADMIN_FIRST_NAME=...`
+- `BOOTSTRAP_ADMIN_LAST_NAME=...`
+- `BOOTSTRAP_ADMIN_PHONE=...`
+
+Se já existir um usuário com o mesmo email, o bootstrap apenas garante os papéis `ADMIN` e `PARTICIPANT` e marca o email como verificado; a senha configurada vale para a primeira criação.
+
 ## Rodar local com PostgreSQL
 
 ```bash
@@ -36,12 +52,12 @@ docker compose up -d
 
 ## Endpoints de health por módulo
 
-- `GET /api/auth/health`
-- `GET /api/events/health`
-- `GET /api/submissions/health`
-- `GET /api/reviews/health`
-- `GET /api/committees/health`
-- `GET /api/registrations/health`
+- `GET /api/v1/auth/health`
+- `GET /api/v1/events/health`
+- `GET /api/v1/submissions/health`
+- `GET /api/v1/reviews/health`
+- `GET /api/v1/committees/health`
+- `GET /api/v1/registrations/health`
 
 ## Módulo Event — Solicitação de Eventos
 
@@ -49,21 +65,21 @@ docker compose up -d
 
 | Método | Rota | Descrição | Auth |
 |--------|------|-----------|------|
-| POST | `/public/event-requests` | Registrar uma nova solicitação pública de evento | Não |
-| POST | `/public/event-requests/track` | Consultar a solicitação por código e e-mail | Não |
-| GET | `/public/event-requests/activate?token=...` | Validar token de ativação | Não |
-| POST | `/public/event-requests/activate` | Concluir a ativação e vincular o organizador ao evento | Não |
+| POST | `/api/v1/public/event-requests` | Registrar uma nova solicitação pública de evento | Não |
+| POST | `/api/v1/public/event-requests/track` | Consultar a solicitação por código e e-mail | Não |
+| GET | `/api/v1/public/event-requests/activate?token=...` | Validar token de ativação | Não |
+| POST | `/api/v1/public/event-requests/activate` | Concluir a ativação e vincular o organizador ao evento | Não |
 
 ### Endpoints administrativos
 
 | Método | Rota | Descrição | Auth |
 |--------|------|-----------|------|
-| GET | `/admin/event-requests` | Listar solicitações com paginação, filtro por status e busca textual | ADMIN |
-| GET | `/admin/event-requests/{requestId}` | Obter o detalhe de uma solicitação | ADMIN |
-| POST | `/admin/event-requests/{requestId}/approve` | Aprovar a solicitação, criar o evento pendente e emitir token | ADMIN |
-| POST | `/admin/event-requests/{requestId}/reject` | Rejeitar a solicitação com motivo obrigatório | ADMIN |
-| POST | `/admin/event-requests/{requestId}/add-note` | Adicionar nota administrativa e mover para análise quando aplicável | ADMIN |
-| POST | `/admin/event-requests/{requestId}/reissue-token` | Reemitir token de ativação expirado ou inválido | ADMIN |
+| GET | `/api/v1/admin/event-requests` | Listar solicitações com paginação, filtro por status e busca textual | ADMIN |
+| GET | `/api/v1/admin/event-requests/{requestId}` | Obter o detalhe de uma solicitação | ADMIN |
+| POST | `/api/v1/admin/event-requests/{requestId}/approve` | Aprovar a solicitação, criar o evento pendente e emitir token | ADMIN |
+| POST | `/api/v1/admin/event-requests/{requestId}/reject` | Rejeitar a solicitação com motivo obrigatório | ADMIN |
+| POST | `/api/v1/admin/event-requests/{requestId}/add-note` | Adicionar nota administrativa e mover para análise quando aplicável | ADMIN |
+| POST | `/api/v1/admin/event-requests/{requestId}/reissue-token` | Reemitir token de ativação expirado ou inválido | ADMIN |
 
 ### Regras principais
 
@@ -79,18 +95,18 @@ docker compose up -d
 
 | Método | Rota | Descrição | Auth |
 |--------|------|-----------|------|
-| POST | `/auth/register` | Cadastro de usuário | Não |
-| POST | `/auth/verify-email` | Verificação de email | Não |
-| POST | `/auth/resend-verification` | Reenviar email de verificação | Não |
-| POST | `/auth/login` | Login (retorna cookie `auth_token`) | Não |
-| POST | `/auth/logout` | Logout (invalida sessão + limpa cookie) | Sim |
-| GET | `/auth/me` | Dados do usuário autenticado | Sim |
-| POST | `/auth/password/forgot` | Solicitar reset de senha | Não |
-| POST | `/auth/password/reset` | Redefinir senha com token | Não |
-| POST | `/auth/password/change` | Alterar senha (autenticado) | Sim |
-| GET | `/users/{userId}` | Perfil público do usuário | Sim |
-| PATCH | `/users/{userId}` | Atualizar próprio perfil | Sim |
-| GET | `/users/me/roles` | Papéis do usuário autenticado | Sim |
+| POST | `/api/v1/auth/register` | Cadastro de usuário | Não |
+| POST | `/api/v1/auth/verify-email` | Verificação de email | Não |
+| POST | `/api/v1/auth/resend-verification` | Reenviar email de verificação | Não |
+| POST | `/api/v1/auth/login` | Login (retorna cookie `auth_token`) | Não |
+| POST | `/api/v1/auth/logout` | Logout (invalida sessão + limpa cookie) | Sim |
+| GET | `/api/v1/auth/me` | Dados do usuário autenticado | Sim |
+| POST | `/api/v1/auth/password/forgot` | Solicitar reset de senha | Não |
+| POST | `/api/v1/auth/password/reset` | Redefinir senha com token | Não |
+| POST | `/api/v1/auth/password/change` | Alterar senha (autenticado) | Sim |
+| GET | `/api/v1/users/{userId}` | Perfil público do usuário | Sim |
+| PATCH | `/api/v1/users/{userId}` | Atualizar próprio perfil | Sim |
+| GET | `/api/v1/users/me/roles` | Papéis do usuário autenticado | Sim |
 
 ### Autenticação via Cookie
 

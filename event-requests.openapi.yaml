@@ -13,7 +13,7 @@ paths:
   # PUBLIC ENDPOINTS (No authentication required)
   # ──────────────────────────────────────────────
 
-  /public/event-requests:
+  /api/v1/public/event-requests:
     post:
       operationId: submitEventRequest
       summary: Submit a new event request (public, no auth)
@@ -49,7 +49,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /public/event-requests/track:
+  /api/v1/public/event-requests/track:
     post:
       operationId: trackEventRequest
       summary: Track event request status (public, no auth)
@@ -79,7 +79,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /public/event-requests/activate:
+  /api/v1/public/event-requests/activate:
     get:
       operationId: validateActivationToken
       summary: Validate an activation token (public, no auth)
@@ -155,7 +155,7 @@ paths:
   # ADMIN ENDPOINTS (Requires ADMIN role)
   # ──────────────────────────────────────────────
 
-  /admin/event-requests:
+  /api/v1/admin/event-requests:
     get:
       operationId: getAdminEventRequests
       summary: List all event requests (admin only)
@@ -210,7 +210,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/event-requests/{requestId}:
+  /api/v1/admin/event-requests/{requestId}:
     get:
       operationId: getAdminEventRequestDetail
       summary: Get event request details (admin only)
@@ -244,7 +244,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/event-requests/{requestId}/approve:
+  /api/v1/admin/event-requests/{requestId}/approve:
     post:
       operationId: approveEventRequest
       summary: Approve an event request (admin only)
@@ -298,7 +298,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/event-requests/{requestId}/reject:
+  /api/v1/admin/event-requests/{requestId}/reject:
     post:
       operationId: rejectEventRequest
       summary: Reject an event request (admin only)
@@ -354,7 +354,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/event-requests/{requestId}/add-note:
+  /api/v1/admin/event-requests/{requestId}/add-note:
     post:
       operationId: addNoteToEventRequest
       summary: Add a note to an event request (admin only)
@@ -404,7 +404,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/event-requests/{requestId}/reissue-token:
+  /api/v1/admin/event-requests/{requestId}/reissue-token:
     post:
       operationId: reissueActivationToken
       summary: Reissue an expired activation token (admin only)

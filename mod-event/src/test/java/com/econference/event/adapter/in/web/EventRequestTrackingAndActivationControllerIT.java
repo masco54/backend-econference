@@ -85,7 +85,7 @@ class EventRequestTrackingAndActivationControllerIT {
                 Instant.parse("2026-04-01T10:15:30Z")
         ));
 
-        mockMvc.perform(post("/public/event-requests/track")
+        mockMvc.perform(post("/api/v1/public/event-requests/track")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new TrackEventRequestRequest("SOL-2026-A3F8", "ana.silva@example.com"))))
                 .andExpect(status().isOk())
@@ -99,7 +99,7 @@ class EventRequestTrackingAndActivationControllerIT {
     void shouldReturnNotFoundWhenTrackingCombinationDoesNotExist() throws Exception {
         when(trackEventRequestUseCase.track(any())).thenThrow(new ResourceNotFoundException("Event request", "tracking details"));
 
-        mockMvc.perform(post("/public/event-requests/track")
+        mockMvc.perform(post("/api/v1/public/event-requests/track")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new TrackEventRequestRequest("SOL-2026-XXXX", "missing@example.com"))))
                 .andExpect(status().isNotFound())
@@ -115,7 +115,7 @@ class EventRequestTrackingAndActivationControllerIT {
                 new ValidateActivationTokenUseCase.ValidateResult(true, "ana.silva@example.com", "Congresso Brasileiro de IA", requestId, true)
         );
 
-        mockMvc.perform(get("/public/event-requests/activate").param("token", token.toString()))
+        mockMvc.perform(get("/api/v1/public/event-requests/activate").param("token", token.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.valid").value(true))
                 .andExpect(jsonPath("$.email").value("ana.silva@example.com"))
@@ -132,7 +132,7 @@ class EventRequestTrackingAndActivationControllerIT {
                 new ActivateEventRequestUseCase.ActivateResult(eventId, userId, "Ativação concluída com sucesso.", false)
         );
 
-        mockMvc.perform(post("/public/event-requests/activate")
+        mockMvc.perform(post("/api/v1/public/event-requests/activate")
                         .principal(new UsernamePasswordAuthenticationToken(new TestPrincipal(userId), null))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ActivateEventRequestRequest(token, null, null))))

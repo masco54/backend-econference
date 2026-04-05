@@ -62,7 +62,7 @@ class EventRequestPublicSubmissionControllerIT {
                 )
         );
 
-        mockMvc.perform(post("/public/event-requests")
+        mockMvc.perform(post("/api/v1/public/event-requests")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validPayload())))
                 .andExpect(status().isCreated())
@@ -91,7 +91,7 @@ class EventRequestPublicSubmissionControllerIT {
                 true
         );
 
-        mockMvc.perform(post("/public/event-requests")
+        mockMvc.perform(post("/api/v1/public/event-requests")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest())
@@ -104,7 +104,7 @@ class EventRequestPublicSubmissionControllerIT {
                 new DuplicateEventRequestException("ana.silva@example.com", "Congresso Brasileiro de IA")
         );
 
-        mockMvc.perform(post("/public/event-requests")
+        mockMvc.perform(post("/api/v1/public/event-requests")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validPayload())))
                 .andExpect(status().isConflict())
