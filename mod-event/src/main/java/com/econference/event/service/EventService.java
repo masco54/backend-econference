@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,23 @@ public class EventService {
 
     @Transactional
     public Event create(Event event) {
+        return eventRepository.save(event);
+    }
+
+    @Transactional
+    public Event createPendingOperationalEvent(String name,
+                                               String description,
+                                               LocalDate startDate,
+                                               LocalDate endDate,
+                                               String location,
+                                               UUID organizerId) {
+        return eventRepository.save(Event.pendingOperational(name, description, startDate, endDate, location, organizerId));
+    }
+
+    @Transactional
+    public Event assignOrganizer(UUID eventId, UUID organizerId) {
+        Event event = findById(eventId);
+        event.assignOrganizer(organizerId);
         return eventRepository.save(event);
     }
 }

@@ -43,6 +43,36 @@ docker compose up -d
 - `GET /api/committees/health`
 - `GET /api/registrations/health`
 
+## Módulo Event — Solicitação de Eventos
+
+### Endpoints públicos
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| POST | `/public/event-requests` | Registrar uma nova solicitação pública de evento | Não |
+| POST | `/public/event-requests/track` | Consultar a solicitação por código e e-mail | Não |
+| GET | `/public/event-requests/activate?token=...` | Validar token de ativação | Não |
+| POST | `/public/event-requests/activate` | Concluir a ativação e vincular o organizador ao evento | Não |
+
+### Endpoints administrativos
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| GET | `/admin/event-requests` | Listar solicitações com paginação, filtro por status e busca textual | ADMIN |
+| GET | `/admin/event-requests/{requestId}` | Obter o detalhe de uma solicitação | ADMIN |
+| POST | `/admin/event-requests/{requestId}/approve` | Aprovar a solicitação, criar o evento pendente e emitir token | ADMIN |
+| POST | `/admin/event-requests/{requestId}/reject` | Rejeitar a solicitação com motivo obrigatório | ADMIN |
+| POST | `/admin/event-requests/{requestId}/add-note` | Adicionar nota administrativa e mover para análise quando aplicável | ADMIN |
+| POST | `/admin/event-requests/{requestId}/reissue-token` | Reemitir token de ativação expirado ou inválido | ADMIN |
+
+### Regras principais
+
+- Solicitações abertas duplicadas para a mesma combinação `requesterEmail + eventName` são rejeitadas com `409 Conflict`.
+- Validações de payload e transições inválidas retornam `400 Bad Request`.
+- Acompanhamento público usa a combinação de código e e-mail e retorna `404 Not Found` para combinações inexistentes.
+- A aprovação cria um `Event` em estado `PENDING` e associa `linkedEventId` à solicitação.
+- Endpoints administrativos exigem autenticação e papel `ADMIN`; acessos sem privilégio retornam `403 Forbidden`.
+
 ## Módulo Auth — Fluxo de Autenticação
 
 ### Endpoints

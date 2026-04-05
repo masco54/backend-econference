@@ -48,4 +48,25 @@ public class Event extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private EventStatus status = EventStatus.DRAFT;
+
+    public static Event pendingOperational(String name,
+                                           String description,
+                                           LocalDate startDate,
+                                           LocalDate endDate,
+                                           String location,
+                                           UUID organizerId) {
+        return Event.builder()
+                .name(name)
+                .description(description)
+                .startDate(startDate)
+                .endDate(endDate)
+                .location(location)
+                .organizerId(organizerId)
+                .status(EventStatus.PENDING)
+                .build();
+    }
+
+    public void assignOrganizer(UUID organizerId) {
+        this.organizerId = organizerId;
+    }
 }

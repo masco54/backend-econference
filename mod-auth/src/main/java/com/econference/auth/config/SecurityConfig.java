@@ -4,6 +4,7 @@ import com.econference.auth.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins:http://localhost:4200}")
@@ -44,11 +46,13 @@ public class SecurityConfig {
                     "/auth/login",
                     "/auth/password/forgot",
                     "/auth/password/reset",
+                    "/event-requests/**",
                     "/api/auth/**",
                     "/actuator/**",
                     "/h2-console/**",
                     "/api/*/health"
                 ).permitAll()
+                .requestMatchers("/admin/event-requests/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

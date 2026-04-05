@@ -53,6 +53,11 @@ app:
     base-url: "http://localhost:4200"
   invitation:
     stub-mode: true
+  event-request:
+    tracking-code-prefix: "SOL"
+    activation-expiry-hours: 168
+    activation-path: "/event-request/activate"
+    notifications-enabled: true
 
 logging:
   level:
