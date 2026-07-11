@@ -81,7 +81,7 @@ class EventRequestTrackingAndActivationControllerIT {
                         new TrackEventRequestUseCase.HistoryItem("requested", Instant.parse("2026-04-01T10:15:30Z"), "Event request submitted"),
                         new TrackEventRequestUseCase.HistoryItem("approved", Instant.parse("2026-04-02T11:15:30Z"), "Approved by admin")
                 ),
-                "http://localhost:4200/event-request/activate?token=11111111-1111-1111-1111-111111111111",
+                "http://localhost:4200/register?token=11111111-1111-1111-1111-111111111111",
                 Instant.parse("2026-04-01T10:15:30Z")
         ));
 
@@ -92,7 +92,7 @@ class EventRequestTrackingAndActivationControllerIT {
                 .andExpect(jsonPath("$.trackingCode").value("SOL-2026-A3F8"))
                 .andExpect(jsonPath("$.status").value("approved"))
                 .andExpect(jsonPath("$.statusHistory.length()").value(2))
-                .andExpect(jsonPath("$.activationUrl").value("http://localhost:4200/event-request/activate?token=11111111-1111-1111-1111-111111111111"));
+                .andExpect(jsonPath("$.activationUrl").value("http://localhost:4200/register?token=11111111-1111-1111-1111-111111111111"));
     }
 
     @Test

@@ -204,7 +204,7 @@ public class EventRequestReviewService implements GetAdminEventRequestsUseCase,
 
     private String buildActivationUrl(EventRequest request) {
         String baseUrl = trimTrailingSlash(eventRequestConfig.getBaseUrl());
-        return baseUrl + eventRequestConfig.getActivationPath() + "?token=" + request.getActivationToken();
+        return baseUrl + "/register?token=" + request.getActivationToken();
     }
 
     private String trimTrailingSlash(String value) {

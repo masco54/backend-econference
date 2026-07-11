@@ -30,12 +30,14 @@ spring:
   mail:
     host: "${MAIL_HOST:mail.econferences.com.br}"
     port: "${MAIL_PORT:465}"
-    username: "${MAIL_USERNAME:suporte@econferences.com.br}"
-    password: "${MAIL_PASSWORD:UIN665_MRXNd^[=u}"
+    username: "${MAIL_USERNAME:contato@econferences.com.br}"
+    password: "${MAIL_PASSWORD:JeQq1X[iiWw%iwhb}"
     properties:
       mail.smtp.auth: true
       mail.smtp.ssl.enable: true
-      mail.smtp.starttls.enable: false
+      mail.smtp.starttls:
+        enable: true
+        required: true
 
 server:
   port: 8080
