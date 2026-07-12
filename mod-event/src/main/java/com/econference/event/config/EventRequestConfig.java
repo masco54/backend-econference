@@ -13,7 +13,7 @@ public class EventRequestConfig {
 
     private String trackingCodePrefix = "SOL";
     private int activationExpiryHours = 168;
-    private String activationPath = "/event-request/activate";
+    private String activationPath = "/organizer-activation";
     private boolean notificationsEnabled = true;
     private String baseUrl = "http://localhost:4200";
 }

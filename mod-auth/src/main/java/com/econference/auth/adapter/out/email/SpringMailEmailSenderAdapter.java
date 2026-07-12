@@ -36,6 +36,15 @@ public class SpringMailEmailSenderAdapter implements EmailSenderPort {
         sendHtmlEmail(to, subject, html);
     }
 
+    @Override
+    @Async
+    public void sendOrganizerActivationEmail(String to, String firstName, String eventName,
+                                             String token, String activationUrl) {
+        String subject = "Solicitação de Evento Aprovada - eConference";
+        String html = EmailTemplates.organizerActivationEmail(firstName, eventName, activationUrl, emailConfig);
+        sendHtmlEmail(to, subject, html);
+    }
+
     private void sendHtmlEmail(String to, String subject, String htmlContent) {
         MDC.put("emailRecipient", to);
         MDC.put("emailSubject", subject);

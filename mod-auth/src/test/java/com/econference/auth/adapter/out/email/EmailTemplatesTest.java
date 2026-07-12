@@ -38,7 +38,7 @@ class EmailTemplatesTest {
 
     private EmailConfig buildEmailConfig() {
         EmailConfig emailConfig = new EmailConfig();
-        emailConfig.setBaseUrl("http://localhost:4200");
+        emailConfig.setBaseUrl("http://localhost:3000");
         emailConfig.setVerificationExpiryHours(24);
         emailConfig.setResetTokenExpiryHours(2);
         return emailConfig;

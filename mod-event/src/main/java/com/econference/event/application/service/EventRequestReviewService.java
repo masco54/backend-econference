@@ -119,6 +119,7 @@ public class EventRequestReviewService implements GetAdminEventRequestsUseCase,
 
         EventRequest saved = eventRequestRepositoryPort.save(request);
         eventRequestNotificationPort.sendApproval(saved, buildActivationUrl(saved));
+
         return saved;
     }
 
@@ -204,7 +205,8 @@ public class EventRequestReviewService implements GetAdminEventRequestsUseCase,
 
     private String buildActivationUrl(EventRequest request) {
         String baseUrl = trimTrailingSlash(eventRequestConfig.getBaseUrl());
-        return baseUrl + "/register?token=" + request.getActivationToken();
+        String path = eventRequestConfig.getActivationPath();
+        return baseUrl + path + "?token=" + request.getActivationToken();
     }
 
     private String trimTrailingSlash(String value) {

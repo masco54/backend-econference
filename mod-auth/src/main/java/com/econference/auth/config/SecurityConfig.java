@@ -46,6 +46,8 @@ public class SecurityConfig {
                     "/api/v1/auth/login",
                     "/api/v1/auth/password/forgot",
                     "/api/v1/auth/password/reset",
+                    "/api/v1/auth/organizer-activation/validate",
+                    "/api/v1/auth/organizer-activation/complete",
                     "/api/v1/public/event-requests/**",
                     "/actuator/**",
                     "/h2-console/**",

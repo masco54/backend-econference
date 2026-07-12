@@ -13,9 +13,11 @@ public class EmailTemplates {
 
   private static final String VERIFICATION_TEMPLATE_PATH = "templates/email/verification-email.html";
   private static final String PASSWORD_RESET_TEMPLATE_PATH = "templates/email/password-reset-email.html";
+  private static final String ORGANIZER_ACTIVATION_TEMPLATE_PATH = "templates/email/organizer-activation-email.html";
   private static final String FIRST_NAME_PLACEHOLDER = "{{FIRST_NAME}}";
   private static final String ACTION_URL_PLACEHOLDER = "{{ACTION_URL}}";
   private static final String EXPIRY_HOURS_PLACEHOLDER = "{{EXPIRY_HOURS}}";
+  private static final String EVENT_NAME_PLACEHOLDER = "{{EVENT_NAME}}";
 
     private EmailTemplates() {
     }
@@ -38,6 +40,16 @@ public class EmailTemplates {
             FIRST_NAME_PLACEHOLDER, safeValue(firstName),
             ACTION_URL_PLACEHOLDER, safeValue(resetUrl),
             EXPIRY_HOURS_PLACEHOLDER, String.valueOf(emailConfig.getResetTokenExpiryHours())));
+  }
+
+    public static String organizerActivationEmail(String firstName, String eventName,
+                                                  String activationUrl, EmailConfig emailConfig) {
+    return renderTemplate(
+        ORGANIZER_ACTIVATION_TEMPLATE_PATH,
+        Map.of(
+            FIRST_NAME_PLACEHOLDER, safeValue(firstName),
+            EVENT_NAME_PLACEHOLDER, safeValue(eventName),
+            ACTION_URL_PLACEHOLDER, safeValue(activationUrl)));
   }
 
   private static String renderTemplate(String templatePath, Map<String, String> replacements) {
