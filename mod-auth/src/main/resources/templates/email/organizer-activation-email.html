@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2>Solicitação de Evento Aprovada - eConference</h2>
+  <p>Olá {{FIRST_NAME}},</p>
+  <p>Ótima notícia! Sua solicitação para o evento <strong>{{EVENT_NAME}}</strong> foi aprovada.</p>
+  <p>Clique no botão abaixo para concluir seu cadastro e acessar a plataforma como organizador:</p>
+  <p>
+    <a href="{{ACTION_URL}}"
+       style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
+      Concluir Cadastro como Organizador
+    </a>
+  </p>
+  <p>Ou copie e cole este link no navegador:</p>
+  <p style="word-break:break-all;">{{ACTION_URL}}</p>
+  <p>Este link expira em 7 dias.</p>
+  <hr>
+  <p style="color:#666;font-size:12px;">
+    Ao concluir o cadastro, você será habilitado automaticamente como organizador e participante na plataforma.
+    Se você não realizou esta solicitação, ignore este email.
+  </p>
+</body>
+</html>

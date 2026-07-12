@@ -13,7 +13,6 @@ import com.econference.event.domain.EventRequest;
 import com.econference.event.domain.EventRequestStatus;
 import com.econference.event.domain.EventStatus;
 import com.econference.event.service.EventService;
-import com.econference.shared.contract.OrganizerActivationTokenPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,9 +43,6 @@ class EventRequestReviewServiceTest {
     @Mock
     private EventService eventService;
 
-    @Mock
-    private OrganizerActivationTokenPort organizerActivationTokenPort;
-
     @InjectMocks
     private EventRequestReviewService eventRequestReviewService;
 
@@ -60,8 +56,7 @@ class EventRequestReviewServiceTest {
                 eventRequestRepositoryPort,
                 eventRequestNotificationPort,
                 eventService,
-                config,
-                organizerActivationTokenPort
+                config
         );
     }
 

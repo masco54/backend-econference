@@ -1,10 +1,12 @@
 ﻿# back-econference Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-04
+Auto-generated from all feature plans. Last updated: 2026-07-11
 
 ## Active Technologies
 - Java 24 + Spring Boot 3.4.4, Spring Web, Spring Data JPA/Hibernate, Flyway, Jakarta Bean Validation, Lombok, Spring Security/JWT já existente em `mod-auth` (001-event-request-endpoints)
 - H2 em memória para desenvolvimento/testes e PostgreSQL no profile persistente; banco físico único com migrações centralizadas em `application/src/main/resources/db/migration` e ownership funcional do dado em `mod-event` (001-event-request-endpoints)
+- [ex.: Java 24 ou NEEDS CLARIFICATION] + [ex.: Spring Boot 3.4, Spring Security, Spring Data JPA ou NEEDS CLARIFICATION] (001-event-request-endpoints)
+- [ex.: PostgreSQL + H2; banco físico único com schemas por módulo, ou NEEDS CLARIFICATION] (001-event-request-endpoints)
 
 - Java 24 + Spring Boot 3.4, Spring Security 6, Spring Data JPA, Spring Mail, JJWT 0.12.6 (master / auth-module-complete)
 
@@ -57,6 +59,7 @@ Use Bean Validation (`@NotBlank`, `@Size`, `@Email`, `@Pattern`) on all request 
 Error responses must follow contract: `{ "message": "...", "code": "...", "details": {} }`.
 
 ## Recent Changes
+- 001-event-request-endpoints: Added [ex.: Java 24 ou NEEDS CLARIFICATION] + [ex.: Spring Boot 3.4, Spring Security, Spring Data JPA ou NEEDS CLARIFICATION]
 - 001-event-request-endpoints: Added Java 24 + Spring Boot 3.4.4, Spring Web, Spring Data JPA/Hibernate, Flyway, Jakarta Bean Validation, Lombok, Spring Security/JWT já existente em `mod-auth`
 
 - master (auth-module-complete): Added Java 24 + Spring Boot 3.4, Spring Security 6 (JWT cookie auth), JJWT 0.12.6, Spring Mail, multi-role User entity refactoring, Flyway V2 migration for auth schema
