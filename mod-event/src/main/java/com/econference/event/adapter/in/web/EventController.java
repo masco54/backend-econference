@@ -60,11 +60,23 @@ public class EventController {
         return new EventSummaryResponse(
                 event.getId(),
                 event.getName(),
-                event.getStatus() != null ? event.getStatus().name() : null,
+                mapStatus(event.getStatus()),
                 event.getStartDate(),
                 event.getEndDate(),
                 event.getLocation(),
                 event.getCreatedAt()
         );
+    }
+
+    private String mapStatus(com.econference.event.domain.EventStatus status) {
+        if (status == null) return null;
+        return switch (status) {
+            case DRAFT       -> "approved";  // admin approved, organizer can configure
+            case PENDING     -> "pending";
+            case PUBLISHED   -> "published";
+            case IN_PROGRESS -> "in_progress";
+            case FINISHED    -> "finished";
+            case CANCELLED   -> "cancelled";
+        };
     }
 }
