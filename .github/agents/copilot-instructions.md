@@ -11,6 +11,8 @@ Auto-generated from all feature plans. Last updated: 2026-07-13
 - H2 (dev/testes locais) / PostgreSQL (produção) — banco físico único, schema `events` de propriedade de `mod-event` (003-organizer-event-listing)
 - Java 24 / Spring Boot 3.4.4 + Spring Security 6, Spring Data JPA, JJWT (JwtService) (004-jwt-cookie-back)
 - PostgreSQL (prod) / H2 (dev) — banco único com schema por módulo; `UserSession` armazena hash do token (004-jwt-cookie-back)
+- Java 24 / Spring Boot 3.4.4 + Spring Security 6, Spring Data JPA, Lombok, Jakarta Validation (005-event-manage-api)
+- H2 (dev) / PostgreSQL (prod) -- banco unico, schema publico, tabela `events` com novas colunas; novas tabelas `registration_categories`, `theme_axes`, `submission_modalities` (005-event-manage-api)
 
 - Java 24 + Spring Boot 3.4, Spring Security 6, Spring Data JPA, Spring Mail, JJWT 0.12.6 (master / auth-module-complete)
 
@@ -63,9 +65,9 @@ Use Bean Validation (`@NotBlank`, `@Size`, `@Email`, `@Pattern`) on all request 
 Error responses must follow contract: `{ "message": "...", "code": "...", "details": {} }`.
 
 ## Recent Changes
+- 005-event-manage-api: Added Java 24 / Spring Boot 3.4.4 + Spring Security 6, Spring Data JPA, Lombok, Jakarta Validation
 - 004-jwt-cookie-back: Added Java 24 / Spring Boot 3.4.4 + Spring Security 6, Spring Data JPA, JJWT (JwtService)
 - 003-organizer-event-listing: Added Java 21 + Spring Boot 3, Spring Security (JWT via `mod-auth`), Spring Data JPA, Lombok
-- 001-event-request-endpoints: Added [ex.: Java 24 ou NEEDS CLARIFICATION] + [ex.: Spring Boot 3.4, Spring Security, Spring Data JPA ou NEEDS CLARIFICATION]
 
 
 <!-- MANUAL ADDITIONS START -->

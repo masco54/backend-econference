@@ -1,0 +1,11 @@
+ALTER TABLE events ADD COLUMN type VARCHAR(50);
+ALTER TABLE events ADD COLUMN theme TEXT;
+ALTER TABLE events ADD COLUMN logo_url TEXT;
+ALTER TABLE events ADD COLUMN has_registration BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE events ADD COLUMN has_submission BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE events ADD COLUMN has_site BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE events ADD COLUMN configuration_completed BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE events ADD COLUMN registration_start_date DATE;
+ALTER TABLE events ADD COLUMN registration_end_date DATE;
+ALTER TABLE events ADD COLUMN submission_start_date DATE;
+ALTER TABLE events ADD COLUMN submission_end_date DATE;

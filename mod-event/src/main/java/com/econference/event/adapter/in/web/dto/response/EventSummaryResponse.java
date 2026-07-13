@@ -8,9 +8,13 @@ public record EventSummaryResponse(
         UUID id,
         String name,
         String status,
+        String type,
+        String theme,
+        String logoUrl,
         LocalDate startDate,
         LocalDate endDate,
         String location,
+        boolean configurationCompleted,
         Instant createdAt
 ) {
 }

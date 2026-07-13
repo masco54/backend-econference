@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface EventRepository extends JpaRepository<Event, UUID> {
@@ -16,4 +17,6 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     Page<Event> findByOrganizerId(UUID organizerId, Pageable pageable);
 
     Page<Event> findByOrganizerIdAndStatus(UUID organizerId, EventStatus status, Pageable pageable);
+
+    Optional<Event> findByIdAndOrganizerId(UUID id, UUID organizerId);
 }

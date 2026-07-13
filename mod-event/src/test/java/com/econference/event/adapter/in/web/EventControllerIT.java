@@ -1,6 +1,7 @@
 package com.econference.event.adapter.in.web;
 
 import com.econference.event.application.port.in.GetOrganizerEventsUseCase;
+import com.econference.event.application.port.in.GetEventDetailUseCase;
 import com.econference.event.config.EventExceptionHandler;
 import com.econference.event.domain.Event;
 import com.econference.event.domain.EventStatus;
@@ -37,6 +38,9 @@ class EventControllerIT {
 
     @Mock
     private GetOrganizerEventsUseCase getOrganizerEventsUseCase;
+
+        @Mock
+        private GetEventDetailUseCase getEventDetailUseCase;
 
     @InjectMocks
     private EventController eventController;
@@ -83,7 +87,7 @@ class EventControllerIT {
                         .principal(principal()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].name").value("SBBD 2025"))
-                .andExpect(jsonPath("$.data[0].status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.data[0].status").value("published"))
                 .andExpect(jsonPath("$.pagination.page").value(1))
                 .andExpect(jsonPath("$.pagination.total").value(1))
                 .andExpect(jsonPath("$.pagination.totalPages").value(1));
@@ -143,5 +147,33 @@ class EventControllerIT {
                 .andExpect(jsonPath("$.pagination.limit").exists())
                 .andExpect(jsonPath("$.pagination.total").exists())
                 .andExpect(jsonPath("$.pagination.totalPages").exists());
+    }
+
+    @Test
+    void shouldReturnEventDetailForOrganizer() throws Exception {
+        UUID eventId = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+
+        Event event = Event.builder()
+                .name("SBBD 2025")
+                .acronym("SBBD")
+                .description("Evento de banco de dados")
+                .status(EventStatus.APPROVED)
+                .type("congress")
+                .theme("Databases")
+                .startDate(LocalDate.of(2025, 9, 15))
+                .endDate(LocalDate.of(2025, 9, 18))
+                .location("São Paulo, SP")
+                .organizerId(organizerId)
+                .configurationCompleted(false)
+                .build();
+        when(getEventDetailUseCase.get(any()))
+                .thenReturn(new GetEventDetailUseCase.EventDetailResult(event));
+
+        mockMvc.perform(get("/api/v1/events/{eventId}", eventId)
+                        .principal(principal()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.name").value("SBBD 2025"))
+                .andExpect(jsonPath("$.data.status").value("approved"))
+                .andExpect(jsonPath("$.data.configurationCompleted").value(false));
     }
 }
