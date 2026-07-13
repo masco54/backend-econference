@@ -58,7 +58,7 @@ class EventRequestActivationServiceTest {
                 new TrackEventRequestUseCase.TrackCommand("SOL-2026-A3F8", "ana.silva@example.com")
         );
 
-        assertThat(result.activationUrl()).isEqualTo("http://localhost:4200/event-request/activate?token=11111111-1111-1111-1111-111111111111");
+        assertThat(result.activationUrl()).isEqualTo("http://localhost:4200/organizer-activation?token=11111111-1111-1111-1111-111111111111");
     }
 
     @Test

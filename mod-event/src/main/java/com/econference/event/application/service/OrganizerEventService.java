@@ -44,17 +44,10 @@ public class OrganizerEventService implements GetOrganizerEventsUseCase {
     }
 
     private EventStatus parseStatus(String statusStr) {
-        return switch (statusStr.toLowerCase()) {
-            case "pending"     -> EventStatus.PENDING;
-            case "approved"    -> EventStatus.DRAFT;    // 'approved' no front = DRAFT no backend
-            case "published"   -> EventStatus.PUBLISHED;
-            case "in_progress" -> EventStatus.IN_PROGRESS;
-            case "finished"    -> EventStatus.FINISHED;
-            case "cancelled"   -> EventStatus.CANCELLED;
-            default -> {
-                try { yield EventStatus.valueOf(statusStr.toUpperCase()); }
-                catch (IllegalArgumentException e) { throw new com.econference.shared.exception.BusinessException("Invalid status value: '" + statusStr + "'"); }
-            }
-        };
+        try {
+            return EventStatus.valueOf(statusStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new com.econference.shared.exception.BusinessException("Invalid status value: '" + statusStr + "'");
+        }
     }
 }

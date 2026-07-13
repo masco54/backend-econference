@@ -47,9 +47,9 @@ public class Event extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private EventStatus status = EventStatus.DRAFT;
+    private EventStatus status = EventStatus.APPROVED;
 
-    public static Event pendingOperational(String name,
+    public static Event draftOperational(String name,
                                            String description,
                                            LocalDate startDate,
                                            LocalDate endDate,
@@ -62,7 +62,7 @@ public class Event extends BaseEntity {
                 .endDate(endDate)
                 .location(location)
                 .organizerId(organizerId)
-                .status(EventStatus.PENDING)
+                .status(EventStatus.APPROVED)
                 .build();
     }
 
