@@ -10,7 +10,10 @@ import com.econference.auth.application.port.in.ValidateOrganizerActivationToken
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/v1/auth/organizer-activation")
@@ -27,6 +32,9 @@ public class OrganizerActivationController {
 
     private final ValidateOrganizerActivationTokenUseCase validateUseCase;
     private final CompleteOrganizerActivationUseCase completeUseCase;
+
+    @Value("${app.jwt.expiration-days:7}")
+    private int expirationDays;
 
     @GetMapping("/validate")
     public ResponseEntity<ValidateOrganizerActivationTokenResponse> validate(
@@ -46,10 +54,20 @@ public class OrganizerActivationController {
 
     @PostMapping("/complete")
     public ResponseEntity<CompleteOrganizerActivationResponse> complete(
-            @Valid @RequestBody CompleteOrganizerActivationRequest request) {
+            @Valid @RequestBody CompleteOrganizerActivationRequest request,
+            jakarta.servlet.http.HttpServletResponse response) {
         log.info("Completing organizer activation for token={}", request.token().substring(0, Math.min(8, request.token().length())) + "…");
         var result = completeUseCase.complete(
                 new CompleteOrganizerActivationCommand(request.token(), request.password(), request.phone()));
+
+        ResponseCookie cookie = ResponseCookie.from("auth_token", result.rawJwt())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .maxAge(Duration.ofDays(expirationDays))
+                .path("/")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         var userInfo = new CompleteOrganizerActivationResponse.UserInfo(
                 result.userId(),

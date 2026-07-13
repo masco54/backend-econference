@@ -4,7 +4,11 @@ import com.econference.auth.application.exception.InvalidTokenException;
 import com.econference.auth.application.port.in.CompleteOrganizerActivationUseCase;
 import com.econference.auth.application.port.in.ValidateOrganizerActivationTokenUseCase;
 import com.econference.auth.application.port.out.UserRepositoryPort;
+import com.econference.auth.application.port.out.UserSessionRepositoryPort;
 import com.econference.auth.domain.User;
+import com.econference.auth.domain.UserSession;
+import com.econference.auth.security.JwtAuthenticationFilter;
+import com.econference.auth.security.JwtService;
 import com.econference.shared.contract.EventRequestActivationPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +30,8 @@ public class OrganizerActivationService
 
     private final EventRequestActivationPort activationPort;
     private final UserRepositoryPort userRepositoryPort;
+    private final UserSessionRepositoryPort userSessionRepositoryPort;
+    private final JwtService jwtService;
 
     @Override
     public ValidationResult validate(String tokenString) {
@@ -57,10 +63,19 @@ public class OrganizerActivationService
         Set<String> roles = user.getRoles().stream()
                 .map(r -> r.name().toLowerCase())
                 .collect(Collectors.toSet());
+
+        String jwt = jwtService.generateToken(user.getId(), roles);
+        UserSession session = UserSession.builder()
+                .user(user)
+                .tokenHash(JwtAuthenticationFilter.hashToken(jwt))
+                .expiresAt(jwtService.getExpiration(jwt))
+                .build();
+        userSessionRepositoryPort.save(session);
+
         return new ActivationResult(
                 user.getId(), roles, result.eventId(),
                 user.getFirstName(), user.getLastName(),
-                user.getEmail(), user.getPhone(), user.isEmailVerified());
+                user.getEmail(), user.getPhone(), user.isEmailVerified(), jwt);
     }
 
     private UUID parseToken(String tokenString) {

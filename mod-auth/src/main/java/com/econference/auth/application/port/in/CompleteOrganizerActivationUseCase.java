@@ -11,5 +11,5 @@ public interface CompleteOrganizerActivationUseCase {
 
     record ActivationResult(UUID userId, Set<String> roles, UUID eventId,
                             String firstName, String lastName, String email,
-                            String phone, boolean emailVerified) {}
+                            String phone, boolean emailVerified, String rawJwt) {}
 }
