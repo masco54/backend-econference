@@ -4,6 +4,8 @@ import com.econference.auth.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins:http://localhost:4200}")
@@ -37,18 +40,22 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(authCorsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
-                    "/auth/register",
-                    "/auth/verify-email",
-                    "/auth/resend-verification",
-                    "/auth/login",
-                    "/auth/password/forgot",
-                    "/auth/password/reset",
-                    "/api/auth/**",
+                    "/api/v1/auth/register",
+                    "/api/v1/auth/verify-email",
+                    "/api/v1/auth/resend-verification",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/password/forgot",
+                    "/api/v1/auth/password/reset",
+                    "/api/v1/auth/organizer-activation/validate",
+                    "/api/v1/auth/organizer-activation/complete",
+                    "/api/v1/public/event-requests/**",
                     "/actuator/**",
                     "/h2-console/**",
-                    "/api/*/health"
+                    "/api/v1/*/health"
                 ).permitAll()
+                .requestMatchers("/api/v1/admin/event-requests/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

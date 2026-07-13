@@ -64,12 +64,12 @@ public class AuthController {
     @Value("${app.jwt.expiration-days:7}")
     private int expirationDays;
 
-    @GetMapping("/api/auth/health")
+    @GetMapping("/api/v1/auth/health")
     public ResponseEntity<Map<String, String>> health() {
         return ResponseEntity.ok(Map.of("module", "auth", "status", "up"));
     }
 
-    @PostMapping("/auth/register")
+    @PostMapping("/api/v1/auth/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.info("Registro solicitado para email={}", request.email());
         var result = registerUserUseCase.register(
@@ -87,7 +87,7 @@ public class AuthController {
      * O front-end redireciona o usuário para http://localhost:4200/verify-email?token=...
      * que por sua vez chama este endpoint.
      */
-    @GetMapping("/auth/verify-email")
+    @GetMapping("/api/v1/auth/verify-email")
     public ResponseEntity<Map<String, String>> verifyEmailGet(@RequestParam String token) {
         log.info("Verificação de email via GET token={}", token);
         MDC.put("emailToken", token.substring(0, Math.min(8, token.length())) + "…");
@@ -100,7 +100,7 @@ public class AuthController {
     /**
      * Verifica e-mail via chamada JSON (POST com corpo { "token": "..." }).
      */
-    @PostMapping("/auth/verify-email")
+    @PostMapping("/api/v1/auth/verify-email")
     public ResponseEntity<Map<String, String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         log.info("Verificação de email via POST");
         MDC.put("emailToken", request.token().substring(0, Math.min(8, request.token().length())) + "…");
@@ -110,14 +110,14 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
     }
 
-    @PostMapping("/auth/resend-verification")
+    @PostMapping("/api/v1/auth/resend-verification")
     public ResponseEntity<Map<String, String>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
         log.info("Reenvio de verificação solicitado para email={}", request.email());
         resendVerificationUseCase.resend(request.email());
         return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
 
-    @PostMapping("/auth/login")
+    @PostMapping("/api/v1/auth/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         log.info("Tentativa de login email={}", request.email());
         var result = loginUseCase.login(request.email(), request.password());
@@ -139,7 +139,7 @@ public class AuthController {
         return ResponseEntity.ok(UserMapper.toLoginResponse(user));
     }
 
-    @PostMapping("/auth/logout")
+    @PostMapping("/api/v1/auth/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         log.info("Logout solicitado");
         String jwt = extractTokenFromCookie(request);
@@ -149,6 +149,8 @@ public class AuthController {
 
         ResponseCookie cookie = ResponseCookie.from("auth_token", "")
                 .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
                 .maxAge(0)
                 .path("/")
                 .build();
@@ -157,21 +159,21 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/auth/me")
+    @GetMapping("/api/v1/auth/me")
     public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal AuthenticatedUserPrincipal principal) {
         log.debug("Buscando dados do usuário atual userId={}", principal.getUserId());
         User user = getCurrentUserUseCase.getUser(principal.getUserId());
         return ResponseEntity.ok(UserMapper.toUserResponse(user));
     }
 
-    @PostMapping("/auth/password/forgot")
+    @PostMapping("/api/v1/auth/password/forgot")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         log.info("Solicitação de recuperação de senha email={}", request.email());
         forgotPasswordUseCase.forgotPassword(request.email());
         return ResponseEntity.ok(Map.of("message", "If the email exists, a reset link has been sent"));
     }
 
-    @PostMapping("/auth/password/reset")
+    @PostMapping("/api/v1/auth/password/reset")
     public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         log.info("Redefinição de senha via token");
         resetPasswordUseCase.resetPassword(request.token(), request.newPassword());
@@ -179,7 +181,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 
-    @PostMapping("/auth/password/change")
+    @PostMapping("/api/v1/auth/password/change")
     public ResponseEntity<Map<String, String>> changePassword(
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             @Valid @RequestBody ChangePasswordRequest request) {

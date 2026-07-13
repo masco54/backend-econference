@@ -38,9 +38,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/health",
+              "raw": "{{baseUrl}}/api/v1/auth/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "health"]
+              "path": ["api", "v1", "auth", "health"]
             },
             "description": "Verifica se o módulo de autenticação está no ar.\n\n**Resposta esperada (200):**\n```json\n{ \"module\": \"auth\", \"status\": \"up\" }\n```"
           },
@@ -82,9 +82,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/register",
+              "raw": "{{baseUrl}}/api/v1/auth/register",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "path": ["api", "v1", "auth", "register"]
             },
             "description": "Registra um novo usuário no sistema.\n\n**Campos obrigatórios:** `firstName`, `lastName`, `email`, `password`\n**Campos opcionais:** `phone`, `invitationToken` (convite para revisor), `coOrganizerToken` (convite para co-organizador)\n\n**Regras de senha:** mínimo 8 caracteres, 1 maiúscula, 1 número, 1 caractere especial\n\n**Respostas:**\n- `201 Created` → usuário criado, e-mail de verificação enviado\n- `409 Conflict` → e-mail já cadastrado (`EMAIL_ALREADY_EXISTS`)\n- `422 Unprocessable Entity` → campos inválidos"
           },
@@ -118,9 +118,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/verify-email",
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "verify-email"]
+              "path": ["api", "v1", "auth", "verify-email"]
             },
             "description": "Verifica o e-mail do usuário usando o token recebido por e-mail.\n\n**Respostas:**\n- `200 OK` → e-mail verificado com sucesso\n- `400 Bad Request` → token inválido ou expirado (`INVALID_VERIFICATION_TOKEN`)\n- `409 Conflict` → e-mail já verificado (`EMAIL_ALREADY_VERIFIED`)"
           },
@@ -154,9 +154,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/resend-verification",
+              "raw": "{{baseUrl}}/api/v1/auth/resend-verification",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "resend-verification"]
+              "path": ["api", "v1", "auth", "resend-verification"]
             },
             "description": "Reenvia o e-mail de verificação.\n\nSempre retorna `200 OK` mesmo que o e-mail não exista (por segurança).\n\n**Respostas:**\n- `200 OK` → e-mail de verificação enviado (ou silenciosamente ignorado)\n- `409 Conflict` → e-mail já verificado (`EMAIL_ALREADY_VERIFIED`)"
           },
@@ -199,9 +199,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/login",
+              "raw": "{{baseUrl}}/api/v1/auth/login",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "path": ["api", "v1", "auth", "login"]
             },
             "description": "Autentica o usuário com e-mail e senha.\n\nO servidor define o cookie HttpOnly `auth_token` com validade de 7 dias. O Postman gerencia esse cookie automaticamente nas próximas requisições.\n\n**Respostas:**\n- `200 OK` → login realizado, cookie `auth_token` definido no header `Set-Cookie`\n- `401 Unauthorized` → credenciais inválidas (`INVALID_CREDENTIALS`)\n- `403 Forbidden` → e-mail não verificado (`EMAIL_NOT_VERIFIED`)"
           },
@@ -238,9 +238,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/auth/me",
+              "raw": "{{baseUrl}}/api/v1/auth/me",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
+              "path": ["api", "v1", "auth", "me"]
             },
             "description": "Retorna os dados do usuário autenticado.\n\n**Requer:** cookie `auth_token` (definido pelo login)\n\n**Respostas:**\n- `200 OK` → dados do usuário\n- `401 Unauthorized` → não autenticado ou sessão expirada"
           },
@@ -267,9 +267,9 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/auth/logout",
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
+              "path": ["api", "v1", "auth", "logout"]
             },
             "description": "Invalida a sessão atual do usuário.\n\nO servidor invalida o JWT no denylist e limpa o cookie `auth_token`.\n\n**Requer:** cookie `auth_token`\n\n**Respostas:**\n- `204 No Content` → logout realizado (também retorna 204 mesmo sem cookie)"
           },
@@ -298,9 +298,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/password/forgot",
+              "raw": "{{baseUrl}}/api/v1/auth/password/forgot",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "password", "forgot"]
+              "path": ["api", "v1", "auth", "password", "forgot"]
             },
             "description": "Solicita o envio de e-mail para recuperação de senha.\n\nSempre retorna `200 OK` mesmo que o e-mail não exista (por segurança — evita enumeração de usuários).\n\nO token de reset tem validade de **1 hora**."
           },
@@ -327,9 +327,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/password/reset",
+              "raw": "{{baseUrl}}/api/v1/auth/password/reset",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "password", "reset"]
+              "path": ["api", "v1", "auth", "password", "reset"]
             },
             "description": "Redefine a senha usando o token recebido por e-mail.\n\n**Respostas:**\n- `200 OK` → senha redefinida com sucesso\n- `400 Bad Request` → token inválido ou expirado (`INVALID_RESET_TOKEN`)"
           },
@@ -363,9 +363,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/password/change",
+              "raw": "{{baseUrl}}/api/v1/auth/password/change",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "password", "change"]
+              "path": ["api", "v1", "auth", "password", "change"]
             },
             "description": "Altera a senha do usuário autenticado.\n\n**Requer:** cookie `auth_token`\n\n**Respostas:**\n- `200 OK` → senha alterada com sucesso\n- `400 Bad Request` → senha atual incorreta (`INVALID_CURRENT_PASSWORD`)\n- `401 Unauthorized` → não autenticado"
           },
@@ -405,9 +405,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["users", "{{userId}}"]
+              "path": ["api", "v1", "users", "{{userId}}"]
             },
             "description": "Retorna as informações públicas de um usuário pelo ID.\n\n**Respostas:**\n- `200 OK` → dados públicos do usuário\n- `404 Not Found` → usuário não encontrado"
           },
@@ -441,9 +441,9 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["users", "{{userId}}"]
+              "path": ["api", "v1", "users", "{{userId}}"]
             },
             "description": "Atualiza o perfil do próprio usuário autenticado.\n\n**Requer:** cookie `auth_token`\nApenas o próprio usuário pode editar seu perfil.\n\n**Respostas:**\n- `200 OK` → perfil atualizado\n- `401 Unauthorized` → não autenticado\n- `403 Forbidden` → tentativa de editar outro usuário\n- `404 Not Found` → usuário não encontrado"
           },
@@ -470,9 +470,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/me/roles",
+              "raw": "{{baseUrl}}/api/v1/users/me/roles",
               "host": ["{{baseUrl}}"],
-              "path": ["users", "me", "roles"]
+              "path": ["api", "v1", "users", "me", "roles"]
             },
             "description": "Lista os papéis (roles) ativos do usuário autenticado.\n\n**Requer:** cookie `auth_token`\n\n**Respostas:**\n- `200 OK` → lista de roles\n- `401 Unauthorized` → não autenticado"
           },
@@ -498,9 +498,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/health",
+              "raw": "{{baseUrl}}/api/v1/auth/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "health"]
+              "path": ["api", "v1", "auth", "health"]
             }
           },
           "response": []
@@ -511,9 +511,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/events/health",
+              "raw": "{{baseUrl}}/api/v1/events/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "events", "health"]
+              "path": ["api", "v1", "events", "health"]
             }
           },
           "response": []
@@ -524,9 +524,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/committees/health",
+              "raw": "{{baseUrl}}/api/v1/committees/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "committees", "health"]
+              "path": ["api", "v1", "committees", "health"]
             }
           },
           "response": []
@@ -537,9 +537,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/registrations/health",
+              "raw": "{{baseUrl}}/api/v1/registrations/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "registrations", "health"]
+              "path": ["api", "v1", "registrations", "health"]
             }
           },
           "response": []
@@ -550,9 +550,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/reviews/health",
+              "raw": "{{baseUrl}}/api/v1/reviews/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "reviews", "health"]
+              "path": ["api", "v1", "reviews", "health"]
             }
           },
           "response": []
@@ -563,9 +563,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/submissions/health",
+              "raw": "{{baseUrl}}/api/v1/submissions/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "submissions", "health"]
+              "path": ["api", "v1", "submissions", "health"]
             }
           },
           "response": []

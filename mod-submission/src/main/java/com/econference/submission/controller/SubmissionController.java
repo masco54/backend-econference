@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/submissions")
+@RequestMapping("/api/v1/submissions")
 public class SubmissionController {
 
     @GetMapping("/health")

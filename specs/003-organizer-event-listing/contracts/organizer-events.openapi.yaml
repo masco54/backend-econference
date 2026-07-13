@@ -1,0 +1,189 @@
+openapi: "3.1.0"
+info:
+  title: eConference – Organizer Event Listing
+  version: "1.0.0"
+  description: |
+    Contrato do endpoint de listagem de eventos do organizador autenticado.
+    Parte do módulo `mod-event`.
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+paths:
+  /events:
+    get:
+      summary: Listar eventos do organizador autenticado
+      description: |
+        Retorna apenas os eventos criados pelo organizador autenticado (extraído do JWT).
+        Requer role `ORGANIZER`.
+      operationId: getOrganizerEvents
+      tags:
+        - Events
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, DRAFT, PUBLISHED, IN_PROGRESS, FINISHED, CANCELLED]
+          description: Filtra eventos pelo status. Omitir para retornar todos os status.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Número da página (1-based).
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Quantidade de itens por página.
+      responses:
+        "200":
+          description: Lista de eventos retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizerEventsResponse"
+              examples:
+                withEvents:
+                  summary: Organizador com eventos
+                  value:
+                    data:
+                      - id: "550e8400-e29b-41d4-a716-446655440000"
+                        name: "SBBD 2025"
+                        status: "PUBLISHED"
+                        startDate: "2025-09-15"
+                        endDate: "2025-09-18"
+                        location: "São Paulo, SP"
+                        createdAt: "2024-11-01T10:00:00Z"
+                    pagination:
+                      page: 1
+                      limit: 20
+                      total: 1
+                      totalPages: 1
+                empty:
+                  summary: Organizador sem eventos
+                  value:
+                    data: []
+                    pagination:
+                      page: 1
+                      limit: 20
+                      total: 0
+                      totalPages: 0
+        "400":
+          description: Parâmetro de status inválido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                timestamp: "2025-07-12T10:00:00Z"
+                status: 400
+                error: "Bad Request"
+                message: "Invalid status value: 'UNKNOWN'"
+        "401":
+          description: Token ausente, expirado ou inválido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Usuário autenticado sem role ORGANIZER.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EventSummaryResponse:
+      type: object
+      required: [id, name, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "SBBD 2025"
+        status:
+          type: string
+          enum: [PENDING, DRAFT, PUBLISHED, IN_PROGRESS, FINISHED, CANCELLED]
+          example: "PUBLISHED"
+        startDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-09-15"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-09-18"
+        location:
+          type: string
+          nullable: true
+          example: "São Paulo, SP"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-11-01T10:00:00Z"
+
+    PaginationResponse:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          format: int64
+          example: 42
+        totalPages:
+          type: integer
+          example: 3
+
+    OrganizerEventsResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventSummaryResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string

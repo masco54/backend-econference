@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Organizer Activation API
+  description: Endpoints de ativação de cadastro de organizador via link gerado após aprovação de solicitação de evento.
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: organizer-activation
+    description: Ativação de cadastro de organizador pós-aprovação de evento
+
+paths:
+  /auth/organizer-activation/validate:
+    get:
+      tags: [organizer-activation]
+      summary: Validar token de ativação de organizador
+      description: |
+        Valida um token de ativação gerado após a aprovação de uma solicitação de evento.
+        Retorna os dados pré-preenchidos do solicitante quando o token é válido.
+        Sempre retorna HTTP 200 — o campo `valid` indica a validade do token.
+        Não distingue entre token inexistente e inválido para evitar enumeração.
+      operationId: validateOrganizerActivationToken
+      security: []  # endpoint público
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Token UUID de ativação recebido por e-mail
+      responses:
+        '200':
+          description: Resultado da validação do token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateOrganizerActivationTokenResponse'
+              examples:
+                valid:
+                  summary: Token válido
+                  value:
+                    valid: true
+                    firstName: "Carlos"
+                    lastName: "Mendes"
+                    email: "carlos.mendes@example.com"
+                    phone: "(11) 98765-4321"
+                    eventName: "Conferência Internacional de Engenharia 2026"
+                expired:
+                  summary: Token expirado
+                  value:
+                    valid: false
+                    reason: "expired"
+                already_used:
+                  summary: Token já utilizado
+                  value:
+                    valid: false
+                    reason: "already-used"
+                not_found:
+                  summary: Token não encontrado ou malformado
+                  value:
+                    valid: false
+                    reason: "not-found"
+        '400':
+          description: Parâmetro token ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/organizer-activation/complete:
+    post:
+      tags: [organizer-activation]
+      summary: Concluir cadastro de organizador via token de ativação
+      description: |
+        Conclui o cadastro do solicitante aprovado. Cria a conta com `emailVerified=true`
+        e roles `[ORGANIZER, PARTICIPANT]` sem etapa adicional de verificação de e-mail.
+        O token é consumido (marcado como utilizado) na mesma transação.
+        Retorna 409 se o e-mail já está cadastrado — o token permanece válido para a conta existente fazer login.
+      operationId: completeOrganizerActivation
+      security: []  # endpoint público
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteOrganizerActivationRequest'
+      responses:
+        '201':
+          description: Cadastro concluído com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteOrganizerActivationResponse'
+        '409':
+          description: E-mail já cadastrado na plataforma
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 409
+                message: "E-mail já cadastrado. Faça login para acessar a plataforma."
+        '422':
+          description: Token inválido/expirado/já utilizado ou senha inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                token_expired:
+                  value:
+                    status: 422
+                    message: "Token de ativação expirado ou já utilizado."
+                password_too_short:
+                  value:
+                    status: 422
+                    message: "Senha deve ter no mínimo 8 caracteres."
+
+components:
+  schemas:
+    ValidateOrganizerActivationTokenResponse:
+      type: object
+      required: [valid]
+      properties:
+        valid:
+          type: boolean
+          description: Indica se o token é válido e pode ser usado para concluir o cadastro
+        reason:
+          type: string
+          nullable: true
+          enum: [expired, already-used, not-found]
+          description: Razão de invalidade (presente apenas quando valid=false)
+        firstName:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Primeiro nome do solicitante (presente apenas quando valid=true)
+        lastName:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Sobrenome do solicitante (presente apenas quando valid=true)
+        email:
+          type: string
+          nullable: true
+          format: email
+          description: E-mail do solicitante — não alterável (presente apenas quando valid=true)
+        phone:
+          type: string
+          nullable: true
+          description: Telefone do solicitante — editável pelo usuário (pode ser null)
+        eventName:
+          type: string
+          nullable: true
+          description: Nome do evento aprovado para exibição contextual
+
+    CompleteOrganizerActivationRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+          format: uuid
+          description: Token UUID de ativação recebido por e-mail
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: Senha escolhida pelo usuário (mínimo 8 caracteres)
+        phone:
+          type: string
+          nullable: true
+          pattern: '^$|^\+?[1-9]\d{10,14}$'
+          description: Telefone editado pelo usuário (sobrepõe o valor original do token)
+
+    CompleteOrganizerActivationResponse:
+      type: object
+      required: [userId, roles, eventId]
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: ID do usuário recém-criado
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [ORGANIZER, PARTICIPANT]
+          description: Roles atribuídos ao usuário
+        eventId:
+          type: string
+          format: uuid
+          description: ID do evento aprovado ao qual o usuário foi vinculado como organizador
+
+    ErrorResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: integer
+          description: HTTP status code
+        message:
+          type: string
+          description: Mensagem de erro acionável para o cliente
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Detalhes adicionais de validação (ex.: campos inválidos)

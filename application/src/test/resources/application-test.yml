@@ -27,6 +27,14 @@ spring:
       mail.smtp.ssl.enable: false
 
 app:
+  bootstrap:
+    admin:
+      enabled: true
+      email: "admin@econference.local"
+      password: "Admin@123"
+      first-name: "Admin"
+      last-name: "Econference"
+      phone: ""
   jwt:
     secret: "dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RzLW9ubHktMjU2LWJpdHMtbG9uZy1lbm91Z2g="
     expiration-days: 1
@@ -39,3 +47,8 @@ app:
     stub-mode: true
   cors:
     allowed-origins: "http://localhost:3000"
+  event-request:
+    tracking-code-prefix: "SOL"
+    activation-expiry-hours: 24
+    activation-path: "/event-request/activate"
+    notifications-enabled: false

@@ -1,0 +1,836 @@
+openapi: 3.0.3
+info:
+  title: Event Requests API
+  description: |
+    API contract for the public event request flow in eConference platform.
+    Allows unauthenticated visitors to request event creation, track request status,
+    and activate their account after admin approval.
+    Includes admin endpoints for managing event requests.
+  version: 1.0.0
+
+paths:
+  # ──────────────────────────────────────────────
+  # PUBLIC ENDPOINTS (No authentication required)
+  # ──────────────────────────────────────────────
+
+  /api/v1/public/event-requests:
+    post:
+      operationId: submitEventRequest
+      summary: Submit a new event request (public, no auth)
+      description: |
+        Allows an unauthenticated visitor to submit an event request with their
+        contact information and proposed event details. Returns a tracking code
+        for status monitoring. Simulates email sending in mock mode.
+      tags:
+        - Public - Event Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitEventRequestRequest'
+      responses:
+        '201':
+          description: Event request submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitEventRequestResponse'
+        '400':
+          description: Validation error (missing fields, invalid email, bad dates)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate request - same email + event name already pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/public/event-requests/track:
+    post:
+      operationId: trackEventRequest
+      summary: Track event request status (public, no auth)
+      description: |
+        Allows a visitor to check the status of their event request using
+        the tracking code and email. Returns generic "not found" message
+        for invalid combinations (security: no information disclosure).
+      tags:
+        - Public - Event Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackEventRequestRequest'
+      responses:
+        '200':
+          description: Request found - returns status and history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackEventRequestResponse'
+        '404':
+          description: Request not found (generic message for security)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/public/event-requests/activate:
+    get:
+      operationId: validateActivationToken
+      summary: Validate an activation token (public, no auth)
+      description: |
+        Validates the activation token and returns information about the request.
+        Used to determine whether to show registration form or redirect to login.
+      tags:
+        - Public - Event Requests
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Activation token from approval email
+      responses:
+        '200':
+          description: Token valid - returns request info and user existence check
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateActivationTokenResponse'
+        '400':
+          description: Token expired or already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      operationId: activateEventRequest
+      summary: Activate account and claim event (public, no auth)
+      description: |
+        Completes the activation flow. If user doesn't exist, creates account
+        with provided password. If user exists, expects prior authentication.
+        Links user as principal organizer of the created event.
+      tags:
+        - Public - Event Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateEventRequestRequest'
+      responses:
+        '200':
+          description: Activation successful - user linked as organizer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateEventRequestResponse'
+        '400':
+          description: Token expired, already used, or invalid password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ──────────────────────────────────────────────
+  # ADMIN ENDPOINTS (Requires ADMIN role)
+  # ──────────────────────────────────────────────
+
+  /api/v1/admin/event-requests:
+    get:
+      operationId: getAdminEventRequests
+      summary: List all event requests (admin only)
+      description: |
+        Returns a paginated list of event requests with optional filtering
+        by status and search by requester name or event name.
+      tags:
+        - Admin - Event Requests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/EventRequestStatus'
+          description: Filter by request status
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by requester name or event name
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          description: Items per page
+      responses:
+        '200':
+          description: Paginated list of event requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEventRequestListResponse'
+        '401':
+          description: Unauthorized - requires authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/event-requests/{requestId}:
+    get:
+      operationId: getAdminEventRequestDetail
+      summary: Get event request details (admin only)
+      tags:
+        - Admin - Event Requests
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Event request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRequest'
+        '401':
+          description: Unauthorized - requires authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/event-requests/{requestId}/approve:
+    post:
+      operationId: approveEventRequest
+      summary: Approve an event request (admin only)
+      description: |
+        Approves the event request. Creates the event with PENDING status,
+        generates an activation token (valid 7 days), and simulates sending
+        an activation email to the requester.
+      tags:
+        - Admin - Event Requests
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                adminNotes:
+                  type: string
+                  description: Optional notes from admin
+      responses:
+        '200':
+          description: Request approved, event created, activation token generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRequest'
+        '401':
+          description: Unauthorized - requires authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Request not in an approvable status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/event-requests/{requestId}/reject:
+    post:
+      operationId: rejectEventRequest
+      summary: Reject an event request (admin only)
+      description: |
+        Rejects the event request with a mandatory reason.
+        Simulates sending a rejection email to the requester.
+      tags:
+        - Admin - Event Requests
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                  description: Mandatory rejection reason
+      responses:
+        '200':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRequest'
+        '401':
+          description: Unauthorized - requires authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Missing reason or request not in a rejectable status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/event-requests/{requestId}/add-note:
+    post:
+      operationId: addNoteToEventRequest
+      summary: Add a note to an event request (admin only)
+      description: |
+        Adds an admin note/comment. Changes status to UNDER_REVIEW if currently
+        REQUESTED. Simulates notifying the requester via email.
+      tags:
+        - Admin - Event Requests
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - note
+              properties:
+                note:
+                  type: string
+                  minLength: 5
+                  description: Admin note/comment
+      responses:
+        '200':
+          description: Note added, status updated if needed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRequest'
+        '401':
+          description: Unauthorized - requires authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/event-requests/{requestId}/reissue-token:
+    post:
+      operationId: reissueActivationToken
+      summary: Reissue an expired activation token (admin only)
+      description: |
+        Generates a new activation token for an approved request whose
+        original token has expired. Sends new activation email.
+      tags:
+        - Admin - Event Requests
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: New token generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRequest'
+        '401':
+          description: Unauthorized - requires authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Request not approved or token not expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Event request UUID
+
+  schemas:
+    EventRequestStatus:
+      type: string
+      enum:
+        - requested
+        - under_review
+        - approved
+        - rejected
+
+    StatusHistoryEntry:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          $ref: '#/components/schemas/EventRequestStatus'
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    EventRequest:
+      type: object
+      required:
+        - id
+        - trackingCode
+        - status
+        - requesterFirstName
+        - requesterLastName
+        - requesterName
+        - requesterEmail
+        - eventName
+        - eventTheme
+        - eventStartDate
+        - eventEndDate
+        - eventLocation
+        - eventType
+        - hasRegistration
+        - hasSubmission
+        - hasSite
+        - activationTokenUsed
+        - statusHistory
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        trackingCode:
+          type: string
+          pattern: '^SOL-\d{4}-[A-Z0-9]{4}$'
+          example: SOL-2026-A3F8
+        status:
+          $ref: '#/components/schemas/EventRequestStatus'
+        requesterFirstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        requesterLastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        requesterName:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Full name derived from requesterFirstName + requesterLastName
+        requesterEmail:
+          type: string
+          format: email
+        requesterPhone:
+          type: string
+        requesterInstitution:
+          type: string
+        eventName:
+          type: string
+          minLength: 5
+          maxLength: 200
+        eventTheme:
+          type: string
+          minLength: 10
+          maxLength: 500
+        eventStartDate:
+          type: string
+          format: date
+        eventEndDate:
+          type: string
+          format: date
+        eventLocation:
+          type: string
+          minLength: 5
+          maxLength: 200
+        eventType:
+          type: string
+          enum:
+            - congress
+            - conference
+            - symposium
+            - lecture_series
+            - seminar
+            - workshop
+            - meetup
+        hasRegistration:
+          type: boolean
+        hasSubmission:
+          type: boolean
+        hasSite:
+          type: boolean
+        adminNotes:
+          type: string
+        rejectionReason:
+          type: string
+        activationToken:
+          type: string
+          format: uuid
+        activationTokenExpiresAt:
+          type: string
+          format: date-time
+        activationTokenUsed:
+          type: boolean
+          default: false
+          description: Derived from whether `activationTokenUsedAt` was populated on the server.
+        linkedEventId:
+          type: string
+          format: uuid
+          description: Event created on approval, initially in `PENDING` operational state.
+        linkedUserId:
+          type: string
+          format: uuid
+        statusHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryEntry'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SubmitEventRequestRequest:
+      type: object
+      required:
+        - requesterFirstName
+        - requesterLastName
+        - requesterEmail
+        - eventName
+        - eventTheme
+        - eventStartDate
+        - eventEndDate
+        - eventLocation
+        - eventType
+        - hasRegistration
+        - hasSubmission
+        - hasSite
+      properties:
+        requesterFirstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        requesterLastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        requesterName:
+          type: string
+          minLength: 3
+          maxLength: 100
+          deprecated: true
+          description: Optional full name for backward compatibility. Backend should derive this value from requesterFirstName + requesterLastName.
+        requesterEmail:
+          type: string
+          format: email
+        requesterPhone:
+          type: string
+        requesterInstitution:
+          type: string
+        eventName:
+          type: string
+          minLength: 5
+          maxLength: 200
+        eventTheme:
+          type: string
+          minLength: 10
+          maxLength: 500
+        eventStartDate:
+          type: string
+          format: date
+        eventEndDate:
+          type: string
+          format: date
+        eventLocation:
+          type: string
+          minLength: 5
+          maxLength: 200
+        eventType:
+          type: string
+          enum:
+            - congress
+            - conference
+            - symposium
+            - lecture_series
+            - seminar
+            - workshop
+            - meetup
+        hasRegistration:
+          type: boolean
+        hasSubmission:
+          type: boolean
+        hasSite:
+          type: boolean
+
+    SubmitEventRequestResponse:
+      type: object
+      required:
+        - id
+        - trackingCode
+        - message
+      properties:
+        id:
+          type: string
+          format: uuid
+        trackingCode:
+          type: string
+          pattern: '^SOL-\d{4}-[A-Z0-9]{4}$'
+        message:
+          type: string
+          example: Solicitação registrada com sucesso.
+
+    TrackEventRequestRequest:
+      type: object
+      required:
+        - trackingCode
+        - email
+      properties:
+        trackingCode:
+          type: string
+        email:
+          type: string
+          format: email
+
+    TrackEventRequestResponse:
+      type: object
+      required:
+        - trackingCode
+        - status
+        - eventName
+        - statusHistory
+        - createdAt
+      properties:
+        trackingCode:
+          type: string
+        status:
+          $ref: '#/components/schemas/EventRequestStatus'
+        eventName:
+          type: string
+        statusHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryEntry'
+        activationUrl:
+          type: string
+          format: uri
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ValidateActivationTokenResponse:
+      type: object
+      required:
+        - valid
+        - email
+        - eventName
+        - userExists
+      properties:
+        valid:
+          type: boolean
+        email:
+          type: string
+          format: email
+        eventName:
+          type: string
+        eventRequestId:
+          type: string
+          format: uuid
+        userExists:
+          type: boolean
+          description: Whether the email belongs to an existing user
+
+    ActivateEventRequestRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          format: uuid
+        password:
+          type: string
+          minLength: 8
+          description: Required if user does not exist
+        confirmPassword:
+          type: string
+          minLength: 8
+          description: Must match password
+
+    ActivateEventRequestResponse:
+      type: object
+      required:
+        - eventId
+        - userId
+        - message
+        - userCreated
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        message:
+          type: string
+        userCreated:
+          type: boolean
+
+    AdminEventRequestListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventRequest'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    PaginationInfo:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
