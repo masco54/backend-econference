@@ -149,6 +149,8 @@ public class AuthController {
 
         ResponseCookie cookie = ResponseCookie.from("auth_token", "")
                 .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
                 .maxAge(0)
                 .path("/")
                 .build();
