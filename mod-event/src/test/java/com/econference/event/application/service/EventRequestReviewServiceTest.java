@@ -92,7 +92,7 @@ class EventRequestReviewServiceTest {
                 .endDate(request.getEventEndDate())
                 .location(request.getEventLocation())
                 .organizerId(adminUserId)
-                .status(EventStatus.PENDING)
+                .status(EventStatus.APPROVED)
                 .build();
         setEntityField(createdEvent, "id", UUID.fromString("22222222-2222-2222-2222-222222222222"));
 
@@ -117,7 +117,7 @@ class EventRequestReviewServiceTest {
         assertThat(result.getLinkedEventId()).isEqualTo(createdEvent.getId());
         assertThat(result.getActivationToken()).isNotNull();
         assertThat(result.getActivationTokenExpiresAt()).isAfter(Instant.now());
-        verify(eventRequestNotificationPort).sendApproval(result, "http://localhost:4200/register?token=" + result.getActivationToken());
+        verify(eventRequestNotificationPort).sendApproval(result, "http://localhost:4200/event-request/activate?token=" + result.getActivationToken());
     }
 
     @Test
@@ -156,7 +156,7 @@ class EventRequestReviewServiceTest {
         assertThat(result.getStatus()).isEqualTo(EventRequestStatus.APPROVED);
         assertThat(result.getActivationToken()).isNotNull().isNotEqualTo(UUID.fromString("66666666-6666-6666-6666-666666666666"));
         assertThat(result.getActivationTokenExpiresAt()).isAfter(Instant.now());
-        verify(eventRequestNotificationPort).sendActivationTokenReissued(result, "http://localhost:4200/register?token=" + result.getActivationToken());
+        verify(eventRequestNotificationPort).sendActivationTokenReissued(result, "http://localhost:4200/event-request/activate?token=" + result.getActivationToken());
     }
 
     @Test

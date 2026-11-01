@@ -50,7 +50,7 @@ public class EventService {
                                                LocalDate endDate,
                                                String location,
                                                UUID organizerId) {
-        return eventRepository.save(Event.pendingOperational(name, description, startDate, endDate, location, organizerId));
+        return eventRepository.save(Event.draftOperational(name, description, startDate, endDate, location, organizerId));
     }
 
     @Transactional

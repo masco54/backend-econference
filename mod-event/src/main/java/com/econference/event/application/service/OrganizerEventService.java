@@ -47,7 +47,15 @@ public class OrganizerEventService implements GetOrganizerEventsUseCase {
         try {
             return EventStatus.valueOf(statusStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new BusinessException("Invalid status value: '" + statusStr + "'");
+            throw new com.econference.shared.exception.BusinessException("Invalid status value: '" + statusStr + "'");
         }
+    }
+
+    boolean canAccessEvent(Event event, UUID userId, boolean isAdmin) {
+        if (event == null || userId == null) {
+            return false;
+        }
+
+        return isAdmin || userId.equals(event.getOrganizerId());
     }
 }

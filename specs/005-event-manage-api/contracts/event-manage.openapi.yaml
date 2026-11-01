@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  title: Event Management API
+  version: 1.0.0
+  description: Endpoints para gerenciamento de evento pelo organizador
+
+paths:
+  /api/v1/events/{id}:
+    get:
+      summary: Retorna detalhes completos de um evento
+      operationId: getEventDetail
+      tags: [Event Management]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Evento encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EventDetailResponse"
+        "401":
+          description: Nao autenticado
+        "403":
+          description: Sem permissao para acessar este evento
+        "404":
+          description: Evento nao encontrado
+
+  /api/v1/events/{id}/registration/categories:
+    get:
+      summary: Lista categorias de inscricao do evento
+      operationId: listRegistrationCategories
+      tags: [Event Management]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: active
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RegistrationCategoryResponse"
+        "401":
+          description: Nao autenticado
+        "403":
+          description: Sem permissao
+        "404":
+          description: Evento nao encontrado
+
+  /api/v1/events/{id}/theme-axes:
+    get:
+      summary: Lista eixos tematicos do evento
+      operationId: listThemeAxes
+      tags: [Event Management]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: active
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Lista de eixos tematicos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ThemeAxisResponse"
+        "401":
+          description: Nao autenticado
+        "403":
+          description: Sem permissao
+        "404":
+          description: Evento nao encontrado
+
+  /api/v1/events/{id}/submission/modalities:
+    get:
+      summary: Lista modalidades de submissao do evento
+      operationId: listSubmissionModalities
+      tags: [Event Management]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: active
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Lista de modalidades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubmissionModalityResponse"
+        "401":
+          description: Nao autenticado
+        "403":
+          description: Sem permissao
+        "404":
+          description: Evento nao encontrado
+
+  /api/v1/events/{id}/statistics:
+    get:
+      summary: Retorna estatisticas do evento para o dashboard
+      operationId: getEventStatistics
+      tags: [Event Management]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Estatisticas do evento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventStatisticsResponse"
+        "401":
+          description: Nao autenticado
+        "403":
+          description: Sem permissao
+        "404":
+          description: Evento nao encontrado
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token
+
+  schemas:
+    EventDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        acronym:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [approved, in_progress, published, finished, cancelled]
+        type:
+          type: string
+          nullable: true
+          example: congress
+        theme:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        location:
+          type: string
+        organizerId:
+          type: string
+          format: uuid
+        hasRegistration:
+          type: boolean
+        hasSubmission:
+          type: boolean
+        hasSite:
+          type: boolean
+        configurationCompleted:
+          type: boolean
+        registrationStartDate:
+          type: string
+          format: date
+          nullable: true
+        registrationEndDate:
+          type: string
+          format: date
+          nullable: true
+        submissionStartDate:
+          type: string
+          format: date
+          nullable: true
+        submissionEndDate:
+          type: string
+          format: date
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    EventSummaryResponse:
+      type: object
+      description: Usado na listagem GET /api/v1/events
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [approved, in_progress, published, finished, cancelled]
+        type:
+          type: string
+          nullable: true
+        theme:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        location:
+          type: string
+        configurationCompleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    RegistrationCategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [FREE, PAID]
+        price:
+          type: number
+          nullable: true
+        active:
+          type: boolean
+
+    ThemeAxisResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+
+    SubmissionModalityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+
+    EventStatisticsResponse:
+      type: object
+      properties:
+        registrationsCount:
+          type: integer
+        submissionsCount:
+          type: integer
+        reviewersCount:
+          type: integer
+        publishedCount:
+          type: integer

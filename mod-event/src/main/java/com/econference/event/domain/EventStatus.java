@@ -1,10 +1,9 @@
 package com.econference.event.domain;
 
 public enum EventStatus {
-    PENDING,
-    DRAFT,
-    PUBLISHED,
+    APPROVED,
     IN_PROGRESS,
+    PUBLISHED,
     FINISHED,
     CANCELLED
 }

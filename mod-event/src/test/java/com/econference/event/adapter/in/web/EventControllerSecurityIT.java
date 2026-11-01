@@ -1,6 +1,7 @@
 package com.econference.event.adapter.in.web;
 
 import com.econference.event.application.port.in.GetOrganizerEventsUseCase;
+import com.econference.event.application.port.in.GetEventDetailUseCase;
 import com.econference.event.config.EventExceptionHandler;
 import com.econference.shared.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -42,6 +44,9 @@ class EventControllerSecurityIT {
 
     @MockBean
     private GetOrganizerEventsUseCase getOrganizerEventsUseCase;
+
+    @MockBean
+    private GetEventDetailUseCase getEventDetailUseCase;
 
     private record TestPrincipal(UUID userId) {}
 
@@ -84,6 +89,22 @@ class EventControllerSecurityIT {
                         .with(authentication(auth("REVIEWER"))))
                 .andExpect(status().isForbidden());
     }
+
+        @Test
+        void shouldRejectUnauthenticatedDetailRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/events/{id}", UUID.randomUUID()))
+            .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void shouldReturnForbiddenWhenOrganizerHasNoAccessToEvent() throws Exception {
+        when(getEventDetailUseCase.get(any()))
+            .thenThrow(new AccessDeniedException("You do not have permission to access this event"));
+
+        mockMvc.perform(get("/api/v1/events/{id}", UUID.randomUUID())
+                .with(authentication(auth("ORGANIZER"))))
+            .andExpect(status().isForbidden());
+        }
 
     @Configuration
     @EnableMethodSecurity
