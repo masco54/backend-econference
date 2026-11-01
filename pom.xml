@@ -28,10 +28,6 @@
         <module>shared</module>
         <module>mod-auth</module>
         <module>mod-event</module>
-        <module>mod-submission</module>
-        <module>mod-review</module>
-        <module>mod-committee</module>
-        <module>mod-registration</module>
         <module>application</module>
     </modules>
 
